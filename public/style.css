@@ -1,0 +1,82 @@
+:root {
+    font-family: Arial, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    background: #f4f7fb;
+    color: #1b1e26;
+  }
+  
+  .container {
+    max-width: 860px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  .sub {
+    color: #566;
+  }
+  
+  .panel {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+  
+  textarea {
+    width: 100%;
+    border: 1px solid #cfd7e5;
+    border-radius: 8px;
+    padding: 0.75rem;
+    resize: vertical;
+  }
+  
+  button {
+    margin-top: 0.5rem;
+    background: #1d4ed8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+  }
+  
+  .answer {
+    white-space: pre-wrap;
+  }
+  
+  .sources {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sources li {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .muted {
+    color: #667;
+  }
+  
+  .file-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .file-input input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }*** End Patch```}"/> ***!
+  
