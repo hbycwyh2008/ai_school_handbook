@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
 
     const aiResult = await generateAnswer(question, chunks);
 
-    const sources = aiResult.sources?.length ? aiResult.sources : formatSourcesFromChunks(chunks);
+    const sources = formatSourcesFromChunks(chunks);
     return res.json({
       answer: aiResult.found ? aiResult.answer : NOT_FOUND_ANSWER,
       sources: aiResult.found ? sources : [],

@@ -36,9 +36,11 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     stage = 'parse-handbook';
     const resolvedPath = path.resolve(filePath);
-    const text = await parseHandbook(resolvedPath, sourceTitle);
+    const parsed = await parseHandbook(resolvedPath, sourceTitle);
+    const text = typeof parsed === 'string' ? parsed : (parsed?.text ?? '');
+    const numPages = typeof parsed === 'object' && parsed != null && 'numPages' in parsed ? parsed.numPages : null;
     stage = 'chunk-text';
-    const chunks = chunkText(text, { sourceTitle });
+    const chunks = chunkText(text, { sourceTitle, numPages });
 
     stage = 'create-embeddings';
     let embeddings;

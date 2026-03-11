@@ -31,6 +31,7 @@ function splitSections(text) {
     const chunkSize = options.chunkSize ?? 900;
     const overlap = options.overlap ?? 120;
     const sourceTitle = options.sourceTitle ?? 'School Handbook';
+    const numPages = options.numPages ?? null;
   
     const sections = splitSections(text);
     const chunks = [];
@@ -59,6 +60,13 @@ function splitSections(text) {
         }
         if (end >= content.length) break;
         start = Math.max(0, end - overlap);
+      }
+    }
+  
+    if (numPages != null && numPages > 0 && chunks.length > 0) {
+      for (let i = 0; i < chunks.length; i++) {
+        const pageNum = Math.min(numPages, Math.max(1, Math.round(((i + 0.5) / chunks.length) * numPages)));
+        chunks[i].metadata.page = pageNum;
       }
     }
   
