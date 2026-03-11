@@ -42,21 +42,28 @@ if (fileSelectButton && handbookFileInput && fileSelectedText) {
   });
 
   handbookFileInput.addEventListener('change', () => {
-    const file = handbookFileInput.files[0];
-    fileSelectedText.textContent = file ? file.name : 'No file chosen';
+    const files = handbookFileInput.files;
+    if (!files || files.length === 0) {
+      fileSelectedText.textContent = 'No file chosen';
+    } else if (files.length === 1) {
+      fileSelectedText.textContent = files[0].name;
+    } else {
+      fileSelectedText.textContent = `${files.length} files: ${Array.from(files).map(f => f.name).join(', ')}`;
+    }
   });
 }
 
 ingestForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const file = handbookFileInput.files[0];
-  if (!file) {
-    ingestStatusEl.textContent = 'Please choose a file.';
+  const files = handbookFileInput.files;
+  if (!files || files.length === 0) {
+    ingestStatusEl.textContent = 'Please choose at least one file.';
     return;
   }
 
-  ingestStatusEl.textContent = 'Uploading and indexing handbook...';
+  const replaceExisting = document.getElementById('replace-existing')?.checked !== false;
+  ingestStatusEl.textContent = `Uploading and indexing ${files.length} file(s)...`;
 
   if (ingestProgress && ingestProgressBar) {
     ingestProgress.classList.add('progress-active');
@@ -74,7 +81,10 @@ ingestForm.addEventListener('submit', async (event) => {
 
   try {
     const formData = new FormData();
-    formData.append('file', file);
+    for (let i = 0; i < files.length; i++) {
+      formData.append('file', files[i]);
+    }
+    formData.append('replaceExisting', replaceExisting ? 'true' : 'false');
 
     const response = await fetch('/api/ingest', {
       method: 'POST',
@@ -88,16 +98,17 @@ ingestForm.addEventListener('submit', async (event) => {
     }
 
     if (response.ok && data.success) {
+      const filenames = data.sources?.map(s => s.name) || (data.sourceTitle ? [data.sourceTitle] : []);
       const record = {
-        filename: file.name,
-        sourceTitle: data.sourceTitle || file.name,
+        filenames: filenames.length ? filenames : Array.from(files).map(f => f.name),
+        sourceTitle: data.sourceTitle || (files.length === 1 ? files[0].name : `${files.length} files`),
         chunksStored: data.chunksStored,
         ingestedAt: Date.now(),
       };
       try {
         localStorage.setItem(INGEST_STORAGE_KEY, JSON.stringify(record));
       } catch (_e) {}
-      ingestStatusEl.textContent = `Ingested handbook successfully. Chunks stored: ${data.chunksStored}.`;
+      ingestStatusEl.textContent = data.message || `Ingested. Chunks stored: ${data.chunksStored}.`;
       updateIngestRecordUI(record, true);
     } else {
       ingestStatusEl.textContent = `Ingest failed: ${data.message || 'Unknown error'}`;
@@ -138,7 +149,8 @@ function updateIngestRecordUI(record, serverHasData) {
     return;
   }
   const date = record.ingestedAt ? new Date(record.ingestedAt).toLocaleString() : '';
-  ingestRecordEl.innerHTML = `Handbook loaded: <strong>${record.filename || record.sourceTitle || 'Handbook'}</strong> (${record.chunksStored ?? 0} chunks)${date ? ` · ${date}` : ''}. You can ask questions below or upload a new file to replace.`;
+  const names = record.filenames?.length ? record.filenames.join(', ') : (record.filename || record.sourceTitle || 'Handbook');
+  ingestRecordEl.innerHTML = `Handbook loaded: <strong>${names}</strong> (${record.chunksStored ?? 0} chunks)${date ? ` · ${date}` : ''}. You can ask questions below or add more files (uncheck "Replace" to append).`;
   ingestRecordEl.className = 'ingest-record ingest-record-ok';
 }
 

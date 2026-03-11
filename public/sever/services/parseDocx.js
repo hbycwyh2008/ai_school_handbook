@@ -18,7 +18,8 @@ export async function parseHandbook(filePath, originalName) {
   if (ext === '.pdf') {
     const data = await fs.readFile(filePath);
     const result = await pdf(data);
-    return result.text;
+    const numPages = typeof result.numpages === 'number' ? result.numpages : null;
+    return numPages != null ? { text: result.text, numPages } : result.text;
   }
 
   throw new Error('Unsupported file type. Use .docx, .txt, .md, or .pdf');
