@@ -1,9 +1,11 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+const url = process.env.DATABASE_URL;
+const needsSSL = url && !url.includes('localhost') && !url.includes('127.0.0.1');
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('render.com') ? { rejectUnauthorized: false } : undefined,
+  connectionString: url,
+  ssl: needsSSL ? { rejectUnauthorized: false } : undefined,
 });
 
 async function query(sql, params = []) {

@@ -1,0 +1,7 @@
+# Railway 部署配置：https://docs.railway.app/deploy/config-as-code
+[build]
+builder = "nixpacks"
+
+[deploy]
+# 首次或表结构变更时建表，再启动服务
+startCommand = "npm run db:init && npm start"

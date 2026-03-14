@@ -52,22 +52,49 @@ Web app for tracking AP CSA/CSP mock test scores with role-based access: teacher
 4. Build: `npm install`; Start: `npm run db:init && npm start`.
 5. Set redirect URI in Google Console to `https://<your-service>.onrender.com/api/auth/google/callback`.
 
-## Deploy on Railway
+## Deploy on Railway（一步步来）
 
-1. Go to [Railway](https://railway.app), sign in, and create a new project.
-2. **Add PostgreSQL**: In the project, click **+ New** → **Database** → **PostgreSQL**. Railway 会自动生成 `DATABASE_URL` 等变量。
-3. **从 GitHub 部署应用**：**+ New** → **GitHub Repo**，选择本仓库。Railway 会识别为 Node 项目。
-4. **关联数据库**：在 Web Service 的 **Variables** 里，点击 **Add Reference**，选择该 PostgreSQL 的 `DATABASE_URL`，这样应用会拿到数据库连接串。
-5. **设置环境变量**（在 Web Service 的 Variables 中）：
-   - `JWT_SECRET`：随机长字符串
-   - `BASE_URL`：部署后的访问地址，如 `https://xxx.up.railway.app`
-   - `GOOGLE_CALLBACK_URL`：`https://xxx.up.railway.app/api/auth/google/callback`
-   - `TEACHER_EMAIL`、`TEACHER_USERNAME`、`TEACHER_PASSWORD`（老师账号）
-   - 若用 Google 登录：`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`
-6. **启动命令**：Build 使用 `npm install`，Start 使用：
-   ```bash
-   npm run db:init && npm start
-   ```
-   若 Railway 未识别，在项目根目录添加 `railway.json` 或在该服务的 Settings 里设置 Start Command 为上述命令。
-7. **Google OAuth**：在 Google Cloud Console 的授权重定向 URI 中加入 `https://你的域名/api/auth/google/callback`。
-8. 首次访问用老师账号登录后，在后台执行过一次建表，之后即可正常使用。
+**第一步**  
+打开 https://railway.app ，登录，点 **New Project**。
+
+**第二步**  
+在项目里点 **+ New**，选 **Database**，再选 **PostgreSQL**。等它建好，不用改任何设置。
+
+**第三步**  
+再点 **+ New**，选 **GitHub Repo**。在列表里选你的仓库（例如 `csa_scores_tracker`），选好后 Railway 会开始从 GitHub 拉代码并部署。
+
+**第四步**  
+部署完成后，你会看到两个服务：一个 PostgreSQL，一个你的应用（Web Service）。点**你的应用**（不要点数据库）。
+
+**第五步**  
+在应用页面里点 **Variables**。先点 **Add Reference**（或 **New Variable** 里的 **Add Reference**），在列表里选 PostgreSQL 那个服务，再选 **DATABASE_URL**，确认。这样应用就能连上数据库。
+
+**第六步**  
+还是在 **Variables** 里，点 **New Variable**，一个一个加下面这些（名字和值都要填对）：
+
+- 变量名：`JWT_SECRET`，值：随便一串长字母数字（例如 32 位）。
+- 变量名：`TEACHER_USERNAME`，值：`teacher`（或你想用的用户名）。
+- 变量名：`TEACHER_PASSWORD`，值：你想设的密码。
+- 变量名：`TEACHER_EMAIL`，值：老师的邮箱（用来 Google 登录时识别老师）。
+
+先加这 4 个，保存。
+
+**第七步**  
+在应用页面点 **Settings**，找到 **Networking**，点 **Generate Domain**。Railway 会给你一个地址，像 `xxxx.up.railway.app`。复制这个地址。
+
+**第八步**  
+回到 **Variables**，再加两个变量：
+
+- 变量名：`BASE_URL`，值：`https://你刚才复制的地址`（例如 `https://xxxx.up.railway.app`，不要末尾斜杠）。
+- 变量名：`GOOGLE_CALLBACK_URL`，值：`https://你刚才复制的地址/api/auth/google/callback`。
+
+保存。
+
+**第九步**  
+（可选）如果你要用 Google 登录：打开 https://console.cloud.google.com/apis/credentials ，在你的 OAuth 客户端里，在「已授权的重定向 URI」里加一条：`https://你复制的 Railway 地址/api/auth/google/callback`。然后把 `GOOGLE_CLIENT_ID` 和 `GOOGLE_CLIENT_SECRET` 也填到 Railway 的 Variables 里。
+
+**第十步**  
+Variables 改过之后，在 **Deployments** 里点右上角 **⋯**，选 **Redeploy**，等部署完成。
+
+**第十一步**  
+浏览器打开 `https://你复制的 Railway 地址`，用 **第六步** 里设的 `TEACHER_USERNAME` 和 `TEACHER_PASSWORD` 登录。能进去就说明部署成功了。
