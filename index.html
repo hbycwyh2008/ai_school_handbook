@@ -775,6 +775,8 @@
                     <option value="AP CSA">AP CSA</option>
                     <option value="AP CSP">AP CSP</option>
                 </select>
+                <label>Exam Date</label>
+                <input type="date" id="addTestExamDate" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;" />
                 <div id="addTestError" class="error"></div>
             </div>
             <div class="footer">
@@ -1063,11 +1065,23 @@ function saveCurrentStudent() {
     s.tests = tests;
 }
 
+function sortTestsByExamDate() {
+    tests.sort(function(a, b) {
+        var da = (a.examDate && String(a.examDate).trim()) ? String(a.examDate).trim().slice(0, 10) : null;
+        var db = (b.examDate && String(b.examDate).trim()) ? String(b.examDate).trim().slice(0, 10) : null;
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da.localeCompare(db);
+    });
+}
+
 function loadStudent(index) {
     currentStudentIndex = index;
     if (index >= students.length) return;
     const s = students[index];
     tests = s.tests || [];
+    sortTestsByExamDate();
     const nameEl = document.getElementById('studentName');
     const gradeEl = document.getElementById('studentGrade');
     const subjEl = document.getElementById('subjectSelect');
@@ -1214,7 +1228,7 @@ function renderTable() {
         t.bottomLine = getBottomLine(subj);
     });
 
-    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Subject</th><th>Score (/100)</th><th>AP Score</th><th>MCQ (≤5 wrong)</th><th>FRQ (Pass)</th><th></th></tr>';
+    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Exam Date</th><th>Score (/100)</th><th>AP Score</th><th>MCQ (≤5 wrong)</th><th>FRQ (Pass)</th><th></th></tr>';
 
     var rowNum = 0;
     var rowsHTML = '';
@@ -1238,10 +1252,14 @@ function renderTable() {
         var frqOk = t.frqScore != null && t.frqScore !== '' && !isNaN(Number(t.frqScore)) && Number(t.frqScore) >= frqMin;
         var frqBadge = t.frqScore != null && t.frqScore !== '' && !isNaN(Number(t.frqScore)) ? (frqOk ? '✓' : '✗') : '—';
         var frqStatusClass = frqBadge === '✓' ? ' mcq-frq-pass' : (frqBadge === '✗' ? ' mcq-frq-fail' : '');
-        var mcqInput = editMode ? '<input type="number" min="0" step="0.1" value="' + mcqVal + '" placeholder="—" class="mcq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onMcqChange(this)" oninput="onMcqChange(this)" style="width:52px;">' : (mcqVal !== '' && mcqVal !== undefined ? mcqVal : '—');
-        var frqInput = editMode ? '<input type="number" min="0" step="0.1" value="' + frqVal + '" placeholder="—" class="frq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onFrqChange(this)" oninput="onFrqChange(this)" style="width:52px;">' : (frqVal !== '' && frqVal !== undefined ? frqVal : '—');
+        var mcqDisplay = (mcqVal !== '' && mcqVal !== undefined && !isNaN(Number(mcqVal))) ? Number(mcqVal).toFixed(3) : (mcqVal !== '' && mcqVal !== undefined ? mcqVal : '—');
+        var frqDisplay = (frqVal !== '' && frqVal !== undefined && !isNaN(Number(frqVal))) ? Number(frqVal).toFixed(3) : (frqVal !== '' && frqVal !== undefined ? frqVal : '—');
+        var mcqInput = editMode ? '<input type="number" min="0" step="0.001" value="' + mcqVal + '" placeholder="—" class="mcq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onMcqChange(this)" oninput="onMcqChange(this)" style="width:64px;">' : mcqDisplay;
+        var frqInput = editMode ? '<input type="number" min="0" step="0.001" value="' + frqVal + '" placeholder="—" class="frq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onFrqChange(this)" oninput="onFrqChange(this)" style="width:64px;">' : frqDisplay;
         var nameCell = editMode ? '<input type="text" class="test-name-input" value="' + (t.name || '').replace(/"/g, '&quot;') + '" placeholder="Test name" data-index="' + i + '" data-test-id="' + testId + '" onchange="onTestNameChange(this)" onblur="onTestNameChange(this)" style="width:100%;min-width:80px;padding:4px 6px;box-sizing:border-box;">' : '<span title="' + (t.name || '').replace(/"/g, '&quot;') + '">' + (t.name || '').replace(/</g, '&lt;') + '</span>';
-        rowsHTML += '<tr><td class="td-num">' + rowNum + '</td><td class="td-name">' + nameCell + '</td><td class="td-subject">' + subj + '</td><td class="td-score"><input type="number" min="0" max="100" step="0.1" value="' + val + '" placeholder="--" class="' + scoreClass + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onScoreChange(this)" oninput="onScoreChange(this)" ' + scoreDisabled + '></td><td class="td-ap">' + apBadge + '</td><td class="td-mcq">' + mcqInput + ' <span class="mcq-frq-status' + mcqStatusClass + '">' + mcqBadge + '</span></td><td class="td-frq">' + frqInput + ' <span class="mcq-frq-status' + frqStatusClass + '">' + frqBadge + '</span></td><td class="td-action">' + (editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : '') + '</td></tr>';
+        var examDateDisplay = (t.examDate && String(t.examDate).trim()) ? String(t.examDate).trim().slice(0, 10) : '—';
+        var examDateCell = editMode ? '<input type="date" class="exam-date-input" value="' + (examDateDisplay !== '—' ? examDateDisplay : '') + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onExamDateChange(this)" style="width:100%;min-width:100px;padding:4px 6px;box-sizing:border-box;">' : examDateDisplay;
+        rowsHTML += '<tr><td class="td-num">' + rowNum + '</td><td class="td-name">' + nameCell + '</td><td class="td-exam-date">' + examDateCell + '</td><td class="td-score"><input type="number" min="0" max="100" step="0.1" value="' + val + '" placeholder="--" class="' + scoreClass + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onScoreChange(this)" oninput="onScoreChange(this)" ' + scoreDisabled + '></td><td class="td-ap">' + apBadge + '</td><td class="td-mcq">' + mcqInput + ' <span class="mcq-frq-status' + mcqStatusClass + '">' + mcqBadge + '</span></td><td class="td-frq">' + frqInput + ' <span class="mcq-frq-status' + frqStatusClass + '">' + frqBadge + '</span></td><td class="td-action">' + (editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : '') + '</td></tr>';
     });
 
     var visTests = getVisibleTests();
@@ -1254,7 +1272,7 @@ function renderTable() {
     var frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var min = frqMinForPass[s] != null ? frqMinForPass[s] : 36; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) >= min; }).length;
     var mcqSummary = 'MCQ pass: ' + mcqPassCount + '/' + visTests.length;
     var frqSummary = 'FRQ pass: ' + frqPassCount + '/' + visTests.length;
-    rowsHTML += '<tr class="summary-row"><td></td><td style="text-align:left;padding-left:14px;">Average / Estimated</td><td></td><td>' + (avg !== null ? avg.toFixed(1) : '--') + '</td><td>' + apBadgeSummary + '</td><td colspan="2">' + mcqSummary + ' &nbsp; ' + frqSummary + '</td><td></td></tr>';
+    rowsHTML += '<tr class="summary-row"><td></td><td style="text-align:left;padding-left:14px;">Average / Estimated</td><td></td><td>' + (avg !== null ? Math.round(avg) : '--') + '</td><td>' + apBadgeSummary + '</td><td colspan="2">' + mcqSummary + ' &nbsp; ' + frqSummary + '</td><td></td></tr>';
     tbody.innerHTML = rowsHTML;
 }
 
@@ -1341,6 +1359,21 @@ function onFrqChange(input) {
     }, 600);
 }
 
+function onExamDateChange(input) {
+    const idx = parseInt(input.dataset.index, 10);
+    const val = input.value.trim();
+    tests[idx].examDate = val ? val.slice(0, 10) : null;
+    sortTestsByExamDate();
+    updateAll();
+    if (sharedMode || !students[currentStudentIndex] || !students[currentStudentIndex].id) return;
+    const testId = input.dataset.testId;
+    if (!testId) return;
+    const s = students[currentStudentIndex];
+    api('PUT', '/api/students/' + s.id + '/tests/' + testId, { examDate: tests[idx].examDate }).then(function(res) {
+        if (res && !res.error) showToast('Saved', 'success');
+    });
+}
+
 // ===================== STATISTICS =====================
 function getAverage() {
     const scores = tests.filter(t => t.score !== null && !isNaN(t.score)).map(t => t.score);
@@ -1384,7 +1417,7 @@ function updateBanner() {
     const estMcq = document.getElementById('estMcq');
     const estFrq = document.getElementById('estFrq');
 
-    estAvg.textContent = avg !== null ? avg.toFixed(1) : '--';
+    estAvg.textContent = avg !== null ? Math.round(avg) : '--';
     estAvg.className = 'est-value' + (apScore ? ` score-${apScore}` : '');
 
     estAP.textContent = apScore !== null ? apScore : '--';
@@ -1566,6 +1599,8 @@ function updateCharts() {
 function openAddTestModal() {
     document.getElementById('addTestName').value = 'Test ' + (tests.length + 1);
     document.getElementById('addTestSubject').value = getCurrentSubject();
+    var today = new Date();
+    document.getElementById('addTestExamDate').value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
     document.getElementById('addTestError').textContent = '';
     document.getElementById('modalAddTest').classList.remove('hidden');
 }
@@ -1582,8 +1617,9 @@ async function submitAddTest() {
     const s = students[currentStudentIndex];
     if (!s || !s.id) return;
     const subject = document.getElementById('addTestSubject').value || 'AP CSA';
+    const examDateVal = document.getElementById('addTestExamDate').value ? document.getElementById('addTestExamDate').value.trim().slice(0, 10) : null;
     const bottomLine = subject === 'AP CSP' ? 90 : 84;
-    const data = await api('POST', '/api/students/' + s.id + '/tests', { name, subject, bottomLine });
+    const data = await api('POST', '/api/students/' + s.id + '/tests', { name, subject, bottomLine, examDate: examDateVal });
     if (data && data.error) {
         document.getElementById('addTestError').textContent = data.error;
         return;
@@ -1593,12 +1629,14 @@ async function submitAddTest() {
             id: data.id,
             name: data.name,
             subject: data.subject || 'AP CSA',
+            examDate: data.examDate || null,
             score: data.score != null ? data.score : null,
             bottomLine: data.bottomLine != null ? data.bottomLine : bottomLine,
             position: data.position,
             mcqWrong: data.mcqWrong,
             frqScore: data.frqScore
         });
+        sortTestsByExamDate();
         closeAddTestModal();
         updateAll();
         showToast('Added', 'success');
@@ -1819,7 +1857,7 @@ function initApp(user) {
 async function initTeacherView() {
     const data = await api('GET', '/api/students');
     if (!data || Array.isArray(data) === false) return;
-    students = data.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
+    students = data.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, examDate: t.examDate || null, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
     if (students.length === 0) {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
@@ -1839,7 +1877,7 @@ async function initTeacherView() {
 async function initStudentView() {
     const data = await api('GET', '/api/me');
     if (!data || data.error) return;
-    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, examDate: t.examDate || null, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
     currentStudentIndex = 0;
     loadStudent(0);
     document.getElementById('sharedSubject').textContent = '(' + (data.subject || 'AP CSA') + ')';
@@ -1877,7 +1915,7 @@ async function initViewerLinkView(token) {
     }
     viewerLinkData = data;
     sharedMode = true;
-    students = data.students.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
+    students = data.students.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, examDate: t.examDate || null, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
     currentStudentIndex = 0;
     loadStudent(0);
     document.querySelector('.report-header .auth-bar').style.display = 'none';
@@ -1915,7 +1953,7 @@ async function initShareView(token) {
         return;
     }
     sharedMode = true;
-    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, examDate: t.examDate || null, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
     currentStudentIndex = 0;
     loadStudent(0);
     document.querySelector('.report-header .auth-bar').style.display = 'none';

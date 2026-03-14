@@ -28,10 +28,13 @@ function genToken() {
 }
 
 function mapTestRow(t) {
+  const d = t.exam_date;
+  const examDate = d ? (typeof d === 'string' ? d.slice(0, 10) : d.toISOString().slice(0, 10)) : null;
   return {
     id: t.id,
     name: t.name,
     subject: t.subject || 'AP CSA',
+    examDate,
     score: t.score != null ? Number(t.score) : null,
     bottomLine: t.bottom_line,
     position: t.position,
@@ -318,7 +321,7 @@ app.get('/api/students', requireAuth, requireTeacher, async (req, res) => {
   const students = await Promise.all(
     rows.map(async (s) => {
       const tests = await query(
-        `SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position, created_at`,
+        `SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position, created_at`,
         [s.id]
       );
       return {
@@ -369,14 +372,14 @@ app.put('/api/students/:id', requireAuth, requireTeacher, async (req, res) => {
     const { rows } = await query(`SELECT id, name, grade, subject, subjects FROM students WHERE id = $1`, [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Student not found' });
     const s = rows[0];
-    const tests = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position`, [s.id]);
+    const tests = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position`, [s.id]);
     return res.json({ ...mapStudentRow(s), tests: tests.rows.map(mapTestRow) });
   }
   params.push(req.params.id);
   await query(`UPDATE students SET ${updates.join(', ')} WHERE id = $${n}`, params);
   const { rows } = await query(`SELECT id, name, grade, subject, subjects FROM students WHERE id = $1`, [req.params.id]);
   if (rows.length === 0) return res.status(404).json({ error: 'Student not found' });
-  const tests = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position`, [req.params.id]);
+  const tests = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position`, [req.params.id]);
   res.json({
     ...mapStudentRow(rows[0]),
     tests: tests.rows.map(mapTestRow),
@@ -405,23 +408,24 @@ app.post('/api/students/:id/invite', requireAuth, requireTeacher, async (req, re
 });
 
 app.post('/api/students/:id/tests', requireAuth, requireTeacher, async (req, res) => {
-  const { name, subject, bottomLine, mcqWrong, frqScore } = req.body || {};
+  const { name, subject, bottomLine, mcqWrong, frqScore, examDate } = req.body || {};
   if (!name || !name.trim()) return res.status(400).json({ error: 'Test name required' });
   const subj = (subject && (subject === 'AP CSA' || subject === 'AP CSP')) ? subject : 'AP CSA';
   const bl = bottomLine ?? (subj === 'AP CSP' ? 90 : 84);
   const mcq = mcqWrong === undefined || mcqWrong === null || mcqWrong === '' ? null : parseFloat(mcqWrong);
   const frq = frqScore === undefined || frqScore === null || frqScore === '' ? null : parseFloat(frqScore);
+  const exam = examDate && String(examDate).trim() ? String(examDate).trim().slice(0, 10) : null;
   const maxPos = await query(`SELECT COALESCE(MAX(position), 0) + 1 AS pos FROM tests WHERE student_id = $1`, [req.params.id]);
   const pos = maxPos.rows[0].pos;
   const { rows } = await query(
-    `INSERT INTO tests (student_id, name, subject, bottom_line, position, mcq_wrong, frq_score) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, subject, score, bottom_line, position, mcq_wrong, frq_score`,
-    [req.params.id, name.trim(), subj, bl, pos, mcq, frq]
+    `INSERT INTO tests (student_id, name, subject, exam_date, bottom_line, position, mcq_wrong, frq_score) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score`,
+    [req.params.id, name.trim(), subj, exam || null, bl, pos, mcq, frq]
   );
   res.status(201).json(mapTestRow(rows[0]));
 });
 
 app.put('/api/students/:id/tests/:testId', requireAuth, requireTeacher, async (req, res) => {
-  const { name, subject, score, bottomLine, mcqWrong, frqScore } = req.body || {};
+  const { name, subject, score, bottomLine, mcqWrong, frqScore, examDate } = req.body || {};
   const updates = [];
   const params = [];
   let n = 1;
@@ -449,14 +453,18 @@ app.put('/api/students/:id/tests/:testId', requireAuth, requireTeacher, async (r
     updates.push(`frq_score = $${n++}`);
     params.push(frqScore === null || frqScore === '' ? null : parseFloat(frqScore));
   }
+  if (examDate !== undefined) {
+    updates.push(`exam_date = $${n++}`);
+    params.push(examDate === null || examDate === '' ? null : String(examDate).trim().slice(0, 10));
+  }
   if (updates.length === 0) {
-    const { rows } = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE id = $1 AND student_id = $2`, [req.params.testId, req.params.id]);
+    const { rows } = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE id = $1 AND student_id = $2`, [req.params.testId, req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Test not found' });
     return res.json(mapTestRow(rows[0]));
   }
   params.push(req.params.testId, req.params.id);
   await query(`UPDATE tests SET ${updates.join(', ')} WHERE id = $${n} AND student_id = $${n + 1}`, params);
-  const { rows } = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE id = $1 AND student_id = $2`, [req.params.testId, req.params.id]);
+  const { rows } = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE id = $1 AND student_id = $2`, [req.params.testId, req.params.id]);
   if (rows.length === 0) return res.status(404).json({ error: 'Test not found' });
   res.json(mapTestRow(rows[0]));
 });
@@ -479,7 +487,7 @@ app.get('/api/me', requireAuth, async (req, res) => {
   );
   if (rows.length === 0) return res.status(404).json({ error: 'Student not found' });
   const s = rows[0];
-  const tests = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position, created_at`, [s.id]);
+  const tests = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position, created_at`, [s.id]);
   res.json({
     id: s.id,
     name: s.name,
@@ -607,7 +615,7 @@ app.get('/api/view/link/:token', async (req, res) => {
     const s = await query(`SELECT id, name, grade, subject, subjects FROM students WHERE id = $1`, [student_id]);
     if (s.rows.length === 0) continue;
     const r = s.rows[0];
-    const t = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position`, [student_id]);
+    const t = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position`, [student_id]);
     students.push({
       id: r.id,
       name: r.name,
@@ -669,7 +677,7 @@ app.get('/api/share/:token', async (req, res) => {
   if (r.expires_at && new Date(r.expires_at) < new Date()) {
     return res.status(410).json({ error: 'Link expired' });
   }
-  const tests = await query(`SELECT id, name, subject, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY position`, [r.id]);
+  const tests = await query(`SELECT id, name, subject, exam_date, score, bottom_line, position, mcq_wrong, frq_score FROM tests WHERE student_id = $1 ORDER BY exam_date ASC NULLS LAST, position`, [r.id]);
   res.json({
     id: r.id,
     name: r.name,
