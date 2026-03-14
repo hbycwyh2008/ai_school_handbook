@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025-2026 AP CSA Mock Results Analysis Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #e0e7ef 100%);
+            color: #333;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+            overflow: hidden;
+        }
+        .report-header {
+            background: linear-gradient(135deg, #1a3c6e 0%, #2563eb 100%);
+            color: #fff;
+            text-align: center;
+            padding: 28px 20px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .report-header .subtitle {
+            font-size: 13px;
+            font-weight: 400;
+            margin-top: 6px;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
+
+        /* Student Info */
+        .student-info {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            background: #f8fafc;
+            border-bottom: 2px solid #e5e7eb;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+        .student-info .info-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .student-info label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+        .student-info input, .student-info select {
+            border: 1px solid #d1d5db;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        .student-info input:focus, .student-info select:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .student-info input.name-input { width: 120px; }
+        .student-info input.grade-input { width: 60px; }
+
+        /* Student Switcher */
+        .student-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .student-switcher select {
+            border: 1px solid #d1d5db;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            min-width: 140px;
+            font-weight: 600;
+            color: #1e40af;
+            transition: border-color 0.2s;
+        }
+        .student-switcher select:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .student-switcher button {
+            padding: 5px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .student-switcher button:hover {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+        .student-switcher button.del-btn {
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+        .student-switcher button.del-btn:hover {
+            background: #dc2626;
+            color: #fff;
+            border-color: #dc2626;
+        }
+
+        /* Table */
+        .table-container {
+            padding: 20px 20px 0;
+            max-width: 100%;
+        }
+        table.score-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.score-table th {
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 700;
+            text-align: center;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        table.score-table th:first-child {
+            width: 36px;
+        }
+        table.score-table th.col-name {
+            text-align: left;
+            padding-left: 14px;
+            min-width: 200px;
+        }
+        table.score-table td {
+            text-align: center;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 13px;
+        }
+        table.score-table td.td-name {
+            font-weight: 600;
+            text-align: left;
+            padding-left: 14px;
+            color: #444;
+            background: #f9fafb;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: default;
+        }
+        table.score-table td.td-num {
+            color: #888;
+            font-size: 12px;
+            background: #f9fafb;
+        }
+        table.score-table td.td-bl {
+            background: #fffbeb;
+            color: #d97706;
+            font-weight: 700;
+        }
+        table.score-table td.td-score {
+            background: #fff7ed;
+            padding: 0;
+        }
+        table.score-table td.td-score input {
+            width: 80px;
+            border: 1.5px solid transparent;
+            background: transparent;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 4px;
+            border-radius: 5px;
+            color: #1e40af;
+            transition: all 0.15s;
+        }
+        table.score-table td.td-score input:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+        table.score-table td.td-score input:focus {
+            border-color: #2563eb;
+            background: #eff6ff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+        }
+        table.score-table td.td-score input::placeholder {
+            color: #ccc;
+            font-weight: 400;
+        }
+        table.score-table td.td-ap {
+            background: #f0fdf4;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        table.score-table td.td-action {
+            padding: 4px;
+        }
+        table.score-table td.td-action button {
+            padding: 3px 8px;
+            border: 1px solid #fca5a5;
+            background: #fff;
+            color: #dc2626;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        table.score-table td.td-action button:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+        /* Summary row */
+        table.score-table tr.summary-row td {
+            background: #eff6ff;
+            font-weight: 700;
+            font-size: 14px;
+            border-top: 2px solid #2563eb;
+        }
+        /* Score colors */
+        .ap-5 { color: #065f46; }
+        .ap-4 { color: #1e40af; }
+        .ap-3 { color: #92400e; }
+        .ap-2 { color: #991b1b; }
+        .ap-1 { color: #6b7280; }
+        .score-above { color: #16a34a !important; }
+        .score-below { color: #dc2626 !important; }
+
+        /* Charts Section */
+        .charts-conversion-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 320px;
+            gap: 20px;
+            padding: 20px;
+        }
+        @media (max-width: 1100px) {
+            .charts-conversion-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        .chart-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-card h3 {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        /* Conversion Chart */
+        .conversion-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+        .conversion-card .conv-subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        .conversion-card h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a3c6e;
+        }
+        .conversion-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .conversion-table th {
+            background: #1e3a5f;
+            color: #fff;
+            padding: 10px 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+        }
+        .conversion-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .conversion-table tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+        .conversion-table tr.active-row td {
+            background: #dbeafe;
+            font-weight: 700;
+            border-color: #93c5fd;
+        }
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 17px;
+        }
+        .badge-5 { background: #d1fae5; color: #065f46; }
+        .badge-4 { background: #dbeafe; color: #1e40af; }
+        .badge-3 { background: #fef3c7; color: #92400e; }
+        .badge-2 { background: #fee2e2; color: #991b1b; }
+        .badge-1 { background: #f3f4f6; color: #6b7280; }
+
+        /* Estimated Score Banner */
+        .estimated-banner {
+            margin: 0 20px 20px;
+            padding: 18px 28px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 12px;
+            border-left: 5px solid #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+        .est-block {
+            display: flex;
+            flex-direction: column;
+        }
+        .est-block .est-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+        .est-block .est-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+        }
+        .est-block .est-value.score-5 { color: #16a34a; }
+        .est-block .est-value.score-4 { color: #2563eb; }
+        .est-block .est-value.score-3 { color: #d97706; }
+        .est-block .est-value.score-2 { color: #dc2626; }
+        .est-block .est-value.score-1 { color: #6b7280; }
+        .est-block .est-detail {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 24px;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fafbfc;
+        }
+        .toolbar button {
+            padding: 7px 18px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+        .toolbar button:hover {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+        .toolbar button.danger {
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+        .toolbar button.danger:hover {
+            background: #dc2626;
+            color: #fff;
+            border-color: #dc2626;
+        }
+        .toolbar button.edit-btn {
+            color: #16a34a;
+            border-color: #86efac;
+            font-weight: 600;
+        }
+        .toolbar button.edit-btn:hover {
+            background: #16a34a;
+            color: #fff;
+            border-color: #16a34a;
+        }
+        .toolbar button.edit-btn.active {
+            background: #16a34a;
+            color: #fff;
+            border-color: #16a34a;
+        }
+        .toolbar button.edit-btn.active:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+        .edit-only { display: none; }
+        .edit-mode .edit-only { display: inline-block; }
+        .locked-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-left: auto;
+        }
+
+        /* Shared View Mode */
+        .shared-mode .student-info { display: none; }
+        .shared-mode .toolbar { display: none; }
+        .shared-banner {
+            display: none;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-bottom: 2px solid #86efac;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: #166534;
+        }
+        .shared-banner .shared-student-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #15803d;
+        }
+        .shared-banner .shared-subject {
+            font-size: 13px;
+            color: #4ade80;
+            margin-left: 8px;
+        }
+        .shared-mode .shared-banner { display: block; }
+        .shared-mode .footer-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 24px;
+            border-top: 1px solid #f0f0f0;
+            background: #fafbfc;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: #aaa;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        /* Login overlay */
+        #loginOverlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 9999;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        #loginOverlay.hidden { display: none; }
+        .login-card {
+            background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            padding: 32px; max-width: 380px; width: 100%;
+        }
+        .login-card h2 { font-size: 20px; margin-bottom: 20px; color: #1a3c6e; text-align: center; }
+        .login-card input { width: 100%; padding: 10px 12px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+        .login-card button { width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .login-card .btn-password { background: linear-gradient(135deg, #1a3c6e 0%, #2563eb 100%); color: #fff; }
+        .login-card .btn-google { background: #fff; border: 1px solid #d1d5db; color: #333; margin-top: 12px; }
+        .login-card .btn-google:hover { background: #f8fafc; }
+        .login-card .error { color: #dc2626; font-size: 13px; margin-top: 8px; text-align: center; }
+        .login-divider { text-align: center; margin: 16px 0; color: #94a3b8; font-size: 12px; }
+        .auth-bar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 8px 20px; background: rgba(0,0,0,0.1); font-size: 13px; }
+        .auth-bar .name { font-weight: 600; }
+        .auth-bar .role-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+        .auth-bar .role-teacher { background: #dbeafe; color: #1e40af; }
+        .auth-bar .role-student { background: #dcfce7; color: #166534; }
+        .auth-bar button { padding: 4px 12px; border: 1px solid rgba(255,255,255,0.6); background: transparent; color: #fff; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .auth-bar button:hover { background: rgba(255,255,255,0.2); }
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-backdrop.hidden { display: none; }
+        .modal-box { background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-width: 520px; width: 100%; max-height: 90vh; overflow: auto; }
+        .modal-box h3 { padding: 16px 20px; border-bottom: 1px solid #e5e7eb; font-size: 16px; }
+        .modal-box .body { padding: 20px; }
+        .modal-box .footer { padding: 12px 20px; border-top: 1px solid #e5e7eb; text-align: right; }
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 14px; z-index: 10000; max-width: 90%; }
+        #toast.success { background: #16a34a; color: #fff; }
+        #toast.error { background: #dc2626; color: #fff; }
+        #toast.info { background: #2563eb; color: #fff; }
+        .invite-page, .viewer-link-page { padding: 40px 20px; text-align: center; }
+        .invite-page h2, .viewer-link-page h2 { margin-bottom: 12px; color: #1a3c6e; }
+        .link-error-page { padding: 40px 20px; text-align: center; color: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-card">
+        <h2>AP Score Tracker</h2>
+        <form id="loginForm" onsubmit="return handlePasswordLogin(event)">
+            <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" />
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
+            <div id="loginError" class="error"></div>
+            <button type="submit" class="btn-password">Sign in (Teacher)</button>
+        </form>
+        <div class="login-divider">— or —</div>
+        <button type="button" class="btn-google" onclick="goGoogleLogin()">Sign in with Google</button>
+    </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<div class="container" id="appContainer">
+    <div class="report-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <span>2025-2026 AP CSA Mock Results Analysis Report</span>
+            <div class="auth-bar" id="authBar" style="display:none;">
+                <span class="name" id="authName"></span>
+                <span class="role-badge" id="authRoleBadge"></span>
+                <button type="button" onclick="doLogout()">Sign out</button>
+            </div>
+        </div>
+        <div class="subtitle">AP Computer Science A - Score Tracking & Prediction Dashboard</div>
+    </div>
+
+    <!-- Shared View Banner (only visible in shared mode) -->
+    <div class="shared-banner" id="sharedBanner">
+        <span class="shared-student-name" id="sharedStudentName"></span>
+        <span class="shared-subject" id="sharedSubject"></span>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px;">Score Report (View Only)</div>
+    </div>
+
+    <!-- Student Info -->
+    <div class="student-info">
+        <div class="student-switcher">
+            <label>Student:</label>
+            <select id="studentSelect" onchange="switchStudent()"></select>
+            <button class="edit-only" onclick="addStudent()">+ Add</button>
+            <button class="edit-only del-btn" onclick="deleteStudent()">Delete</button>
+        </div>
+        <div class="info-group">
+            <label>Name:</label>
+            <input type="text" class="name-input editable-ctrl" id="studentName" value="Jun" oninput="onStudentInfoChange()" readonly>
+        </div>
+        <div class="info-group">
+            <label>Grade:</label>
+            <input type="number" class="grade-input editable-ctrl" id="studentGrade" value="12" min="9" max="12" oninput="onStudentInfoChange()" readonly>
+        </div>
+        <div class="info-group">
+            <label>Subject:</label>
+            <select id="subjectSelect" class="editable-ctrl" onchange="onStudentInfoChange()" disabled>
+                <option value="AP CSA" selected>AP CSA</option>
+                <option value="AP CSP">AP CSP</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar" id="toolbar">
+        <button class="edit-btn" id="editToggleBtn" onclick="toggleEditMode()">Unlock Edit</button>
+        <button class="edit-only" onclick="addTest()">+ Add Test</button>
+        <button class="edit-only" onclick="openViewerLinksModal()">Viewer Links (行政/申请)</button>
+        <button class="edit-only" onclick="shareLinkForStudent()">Share link (给学生)</button>
+        <button onclick="exportData()">Export JSON</button>
+        <button class="edit-only" onclick="importData()">Import JSON</button>
+        <button id="screenshotBtn" onclick="screenshotPage(this)">Screenshot</button>
+        <button class="edit-only danger" onclick="resetAll()">Reset All</button>
+        <button class="edit-only" onclick="openAccountsModal()">Manage Accounts</button>
+        <span class="locked-hint" id="lockedHint">View Only</span>
+    </div>
+
+    <!-- Score Table -->
+    <div class="table-container" id="tableContainer">
+        <table class="score-table" id="scoreTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Estimated Score Banner -->
+    <div class="estimated-banner" id="estimatedBanner">
+        <div class="est-block">
+            <span class="est-label">Current Average</span>
+            <span class="est-value" id="estAvg">--</span>
+        </div>
+        <div class="est-block">
+            <span class="est-label">Estimated AP Score</span>
+            <span class="est-value" id="estAP">--</span>
+        </div>
+        <div class="est-block">
+            <span class="est-label">Latest Test Score</span>
+            <span class="est-value" id="estLatest">--</span>
+            <span class="est-detail" id="estLatestName"></span>
+        </div>
+        <div class="est-block">
+            <span class="est-label">Trend</span>
+            <span class="est-value" id="estTrend">--</span>
+        </div>
+    </div>
+
+    <!-- Charts + Conversion -->
+    <div class="charts-conversion-section">
+        <!-- Bar Chart -->
+        <div class="chart-card">
+            <h3 id="barChartTitle">AP CSA Score Bar Chart</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+        <!-- Line Chart -->
+        <div class="chart-card">
+            <h3 id="lineChartTitle">AP CSA Score Trend (Line Chart)</h3>
+            <canvas id="lineChart"></canvas>
+        </div>
+        <!-- Conversion Chart -->
+        <div class="conversion-card">
+            <div class="conv-subtitle">AP Score Conversion Chart</div>
+            <h2 id="conversionTitle">Computer Science A</h2>
+            <table class="conversion-table" id="conversionTable">
+                <thead>
+                    <tr>
+                        <th>Composite Score Range</th>
+                        <th>AP Score</th>
+                    </tr>
+                </thead>
+                <tbody id="conversionBody"></tbody>
+            </table>
+            <div style="margin-top:16px; font-size:12px; color:#999;">
+                * Based on recent AP exam score distributions. Ranges are approximate.
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Mode Footer Toolbar (only visible in shared mode) -->
+    <div class="footer-toolbar" id="sharedFooterToolbar" style="display:none;">
+        <button onclick="screenshotPage(this)" style="padding:7px 18px;border:1px solid #d1d5db;border-radius:7px;background:#fff;font-size:13px;cursor:pointer;font-weight:500;">Screenshot</button>
+        <button onclick="exportData()" style="padding:7px 18px;border:1px solid #d1d5db;border-radius:7px;background:#fff;font-size:13px;cursor:pointer;font-weight:500;">Export JSON</button>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalAddStudent" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal('modalAddStudent')">
+        <div class="modal-box">
+            <h3>Add Student</h3>
+            <div class="body">
+                <label>Name *</label><input type="text" id="addStudentName" placeholder="Student name" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;" />
+                <label>Grade</label><input type="text" id="addStudentGrade" value="12" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;" />
+                <label>Subject</label>
+                <select id="addStudentSubject" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;">
+                    <option value="AP CSA">AP CSA</option>
+                    <option value="AP CSP">AP CSP</option>
+                </select>
+                <div id="addStudentError" class="error"></div>
+            </div>
+            <div class="footer">
+                <button type="button" onclick="closeModal('modalAddStudent')" style="margin-right:8px;">Cancel</button>
+                <button type="button" class="btn-password" onclick="submitAddStudent()">Add</button>
+            </div>
+        </div>
+    </div>
+    <div id="modalAccounts" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal('modalAccounts')">
+        <div class="modal-box" style="max-width:640px;">
+            <h3>Manage Accounts</h3>
+            <div class="body">
+                <table class="score-table" style="font-size:12px;"><thead><tr><th>Student</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="accountsTableBody"></tbody></table>
+            </div>
+            <div class="footer"><button type="button" onclick="closeModal('modalAccounts')">Close</button></div>
+        </div>
+    </div>
+    <div id="modalViewerLinks" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal('modalViewerLinks')">
+        <div class="modal-box" style="max-width:640px;">
+            <h3>Viewer Links (行政/申请老师)</h3>
+            <div class="body">
+                <div id="viewerLinkCreateBox" style="margin-bottom:20px;padding:12px;background:#f8fafc;border-radius:8px;">
+                    <div style="font-weight:600;margin-bottom:8px;">Create new link</div>
+                    <input type="text" id="newViewerLinkName" placeholder="Link name (e.g. 行政老师)" style="width:100%;max-width:240px;padding:6px 8px;margin-bottom:10px;box-sizing:border-box;display:block;" />
+                    <div style="font-size:13px;margin-bottom:6px;">Select students this link can see:</div>
+                    <div id="viewerLinkCreateStudents" style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:8px;background:#fff;"></div>
+                    <button type="button" class="btn-password" style="margin-top:10px;width:auto;padding:6px 16px;" onclick="createViewerLink()">Create link</button>
+                </div>
+                <div style="font-weight:600;margin-bottom:8px;">Existing links</div>
+                <div id="viewerLinksList"></div>
+            </div>
+            <div class="footer"><button type="button" onclick="closeModal('modalViewerLinks')">Close</button></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025-2026 AP CSA Mock Results Analysis Report &middot; Dynamic Score Tracker
+    </div>
+</div>
+
+<script>
+const TOKEN_KEY = 'ap_auth_token';
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function setToken(t) { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
+
+async function api(method, url, body) {
+    const opts = { method, headers: {} };
+    const token = getToken();
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (body && (method === 'POST' || method === 'PUT')) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+    }
+    const r = await fetch(url, opts);
+    if (r.status === 401) {
+        setToken(null);
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('appContainer').style.display = 'none';
+        showToast('Session expired. Please sign in again.', 'error');
+        return null;
+    }
+    const text = await r.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (_) {}
+    if (!r.ok) return { error: (data && data.error) || r.statusText, status: r.status };
+    return data;
+}
+
+function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = type || 'info';
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+let editMode = false;
+let currentUser = null;
+let students = [];
+let currentStudentIndex = 0;
+let tests = [];
+let sharedMode = false;
+let viewerLinkData = null;
+let saveScoreTimer = null;
+let saveInfoTimer = null;
+
+const conversionCharts = {
+    'AP CSA': [
+        { min: 84, max: 100, apScore: 5 },
+        { min: 68, max: 83,  apScore: 4 },
+        { min: 45, max: 67,  apScore: 3 },
+        { min: 25, max: 44,  apScore: 2 },
+        { min: 0,  max: 24,  apScore: 1 },
+    ],
+    'AP CSP': [
+        { min: 90, max: 100, apScore: 5 },
+        { min: 81, max: 89,  apScore: 4 },
+        { min: 62, max: 80,  apScore: 3 },
+        { min: 45, max: 61,  apScore: 2 },
+        { min: 0,  max: 44,  apScore: 1 },
+    ],
+};
+const conversionTitles = {
+    'AP CSA': 'Computer Science A',
+    'AP CSP': 'Computer Science Principles',
+};
+const fiveMarkBottomLines = { 'AP CSA': 84, 'AP CSP': 90 };
+
+function getCurrentSubject() {
+    const el = document.getElementById('subjectSelect');
+    return (el && el.value) || (currentStudentIndex < students.length && students[currentStudentIndex].subject) || 'AP CSA';
+}
+function getConversionChart() {
+    return conversionCharts[getCurrentSubject()] || conversionCharts['AP CSA'];
+}
+function getBottomLine() {
+    return fiveMarkBottomLines[getCurrentSubject()] || 84;
+}
+
+// ===================== EDIT MODE =====================
+function toggleEditMode() {
+    editMode = !editMode;
+    applyEditMode();
+    renderTable();
+}
+
+function applyEditMode() {
+    const container = document.querySelector('.container');
+    const btn = document.getElementById('editToggleBtn');
+    const hint = document.getElementById('lockedHint');
+
+    if (editMode) {
+        container.classList.add('edit-mode');
+        btn.textContent = 'Lock';
+        btn.classList.add('active');
+        hint.textContent = 'Edit Mode';
+        hint.style.color = '#16a34a';
+    } else {
+        container.classList.remove('edit-mode');
+        btn.textContent = 'Unlock Edit';
+        btn.classList.remove('active');
+        hint.textContent = 'View Only';
+        hint.style.color = '#94a3b8';
+    }
+
+    // Enable/disable student info controls
+    document.querySelectorAll('.editable-ctrl').forEach(el => {
+        if (el.tagName === 'SELECT') {
+            el.disabled = !editMode;
+        } else {
+            el.readOnly = !editMode;
+        }
+    });
+}
+
+// ===================== MULTI-STUDENT =====================
+function saveCurrentStudent() {
+    if (currentStudentIndex >= students.length) return;
+    const s = students[currentStudentIndex];
+    const nameEl = document.getElementById('studentName');
+    const gradeEl = document.getElementById('studentGrade');
+    const subjEl = document.getElementById('subjectSelect');
+    if (nameEl) s.name = nameEl.value;
+    if (gradeEl) s.grade = gradeEl.value;
+    if (subjEl) s.subject = subjEl.value;
+    s.tests = tests;
+}
+
+function loadStudent(index) {
+    currentStudentIndex = index;
+    if (index >= students.length) return;
+    const s = students[index];
+    tests = s.tests || [];
+    const nameEl = document.getElementById('studentName');
+    const gradeEl = document.getElementById('studentGrade');
+    const subjEl = document.getElementById('subjectSelect');
+    if (nameEl) nameEl.value = s.name;
+    if (gradeEl) gradeEl.value = s.grade;
+    if (subjEl) subjEl.value = s.subject || 'AP CSA';
+}
+
+function renderStudentSelect() {
+    const sel = document.getElementById('studentSelect');
+    if (!sel) return;
+    sel.innerHTML = '';
+    students.forEach((s, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = s.name || ('Student ' + (i + 1));
+        if (i === currentStudentIndex) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function switchStudent() {
+    saveCurrentStudent();
+    const idx = parseInt(document.getElementById('studentSelect').value);
+    loadStudent(idx);
+    updateAll();
+}
+
+function openAddStudentModal() {
+    document.getElementById('addStudentName').value = '';
+    document.getElementById('addStudentGrade').value = '12';
+    document.getElementById('addStudentSubject').value = 'AP CSA';
+    document.getElementById('addStudentError').textContent = '';
+    document.getElementById('modalAddStudent').classList.remove('hidden');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+async function submitAddStudent() {
+    const name = document.getElementById('addStudentName').value.trim();
+    if (!name) {
+        document.getElementById('addStudentError').textContent = 'Name required';
+        return;
+    }
+    const grade = document.getElementById('addStudentGrade').value || '12';
+    const subject = document.getElementById('addStudentSubject').value || 'AP CSA';
+    const data = await api('POST', '/api/students', { name, grade, subject });
+    if (data && data.error) {
+        document.getElementById('addStudentError').textContent = data.error;
+        return;
+    }
+    if (data) {
+        students.push({ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: data.tests || [] });
+        loadStudent(students.length - 1);
+        renderStudentSelect();
+        updateAll();
+        closeModal('modalAddStudent');
+        showToast('Student added.', 'success');
+    }
+}
+function addStudent() { openAddStudentModal(); }
+
+async function deleteStudent() {
+    if (currentStudentIndex >= students.length) return;
+    if (students.length <= 1) {
+        showToast('Cannot delete the last student.', 'error');
+        return;
+    }
+    const s = students[currentStudentIndex];
+    if (!confirm('Delete student "' + s.name + '"?')) return;
+    const data = await api('DELETE', '/api/students/' + s.id);
+    if (data && data.error) {
+        showToast(data.error, 'error');
+        return;
+    }
+    students.splice(currentStudentIndex, 1);
+    if (currentStudentIndex >= students.length) currentStudentIndex = students.length - 1;
+    loadStudent(currentStudentIndex);
+    renderStudentSelect();
+    updateAll();
+    showToast('Student deleted.', 'success');
+}
+
+function onStudentInfoChange() {
+    saveCurrentStudent();
+    renderStudentSelect();
+    updateAll();
+    if (sharedMode || !students[currentStudentIndex] || !students[currentStudentIndex].id) return;
+    clearTimeout(saveInfoTimer);
+    saveInfoTimer = setTimeout(async () => {
+        const s = students[currentStudentIndex];
+        await api('PUT', '/api/students/' + s.id, { name: s.name, grade: s.grade, subject: s.subject });
+    }, 600);
+}
+
+let barChartInstance = null;
+let lineChartInstance = null;
+
+// ===================== CONVERSION TABLE =====================
+function renderConversionTable(highlightScore) {
+    const chart = getConversionChart();
+    const subject = getCurrentSubject();
+    document.getElementById('conversionTitle').textContent = conversionTitles[subject] || subject;
+    const tbody = document.getElementById('conversionBody');
+    tbody.innerHTML = '';
+    chart.forEach(row => {
+        const tr = document.createElement('tr');
+        const apScore = row.apScore;
+        const isActive = highlightScore !== null && highlightScore >= row.min && highlightScore <= row.max;
+        if (isActive) tr.classList.add('active-row');
+        tr.innerHTML = `
+            <td>${row.min} - ${row.max}</td>
+            <td><span class="score-badge badge-${apScore}">${apScore}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function getAPScore(score) {
+    if (score === null || score === undefined || isNaN(score)) return null;
+    const chart = getConversionChart();
+    for (const row of chart) {
+        if (score >= row.min && score <= row.max) return row.apScore;
+    }
+    if (score > 100) return 5;
+    return 1;
+}
+
+// ===================== SCORE TABLE =====================
+function renderTable() {
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+    const bl = getBottomLine();
+    tests.forEach(t => { t.bottomLine = bl; });
+
+    // Header row (vertical layout: each test is a row)
+    thead.innerHTML = `<tr>
+        <th>#</th>
+        <th class="col-name">Test Name</th>
+        <th>5-Mark Line</th>
+        <th>Score (/100)</th>
+        <th>AP Score</th>
+        <th></th>
+    </tr>`;
+
+    // One row per test
+    let rowsHTML = '';
+    tests.forEach((t, i) => {
+        const val = t.score !== null ? t.score : '';
+        const ap = t.score !== null ? getAPScore(t.score) : null;
+        const apBadge = ap !== null
+            ? `<span class="score-badge badge-${ap}">${ap}</span>`
+            : '<span style="color:#ccc;">--</span>';
+        const scoreClass = t.score !== null
+            ? (t.score >= bl ? 'score-above' : 'score-below')
+            : '';
+        const scoreDisabled = editMode ? '' : 'readonly';
+        const testId = t.id ? t.id : i;
+        rowsHTML += `<tr>
+            <td class="td-num">${i + 1}</td>
+            <td class="td-name" title="${(t.name || '').replace(/"/g, '&quot;')}">${(t.name || '').replace(/</g, '&lt;')}</td>
+            <td class="td-bl">${t.bottomLine}</td>
+            <td class="td-score"><input type="number" min="0" max="100" step="0.1" value="${val}" placeholder="--" class="${scoreClass}" data-index="${i}" data-test-id="${testId}" onchange="onScoreChange(this)" oninput="onScoreChange(this)" ${scoreDisabled}></td>
+            <td class="td-ap">${apBadge}</td>
+            <td class="td-action">${editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : ''}</td>
+        </tr>`;
+    });
+
+    // Summary row
+    const avg = getAverage();
+    const apScore = getAPScore(avg);
+    const apBadgeSummary = apScore !== null
+        ? `<span class="score-badge badge-${apScore}">${apScore}</span>`
+        : '--';
+    rowsHTML += `<tr class="summary-row">
+        <td></td>
+        <td style="text-align:left;padding-left:14px;">Average / Estimated</td>
+        <td>${bl}</td>
+        <td>${avg !== null ? avg.toFixed(1) : '--'}</td>
+        <td>${apBadgeSummary}</td>
+        <td></td>
+    </tr>`;
+
+    tbody.innerHTML = rowsHTML;
+}
+
+async function deleteTestByIndex(index) {
+    if (tests.length <= 1) {
+        showToast('Cannot delete the last test.', 'error');
+        return;
+    }
+    const t = tests[index];
+    if (!confirm('Delete test "' + (t.name || '') + '"?')) return;
+    const s = students[currentStudentIndex];
+    if (!s || !s.id) return;
+    const data = await api('DELETE', '/api/students/' + s.id + '/tests/' + (t.id || t.name));
+    if (data && data.error) {
+        showToast(data.error, 'error');
+        return;
+    }
+    tests.splice(index, 1);
+    updateAll();
+}
+function deleteTest(index) { deleteTestByIndex(index); }
+
+function onScoreChange(input) {
+    const idx = parseInt(input.dataset.index, 10);
+    const val = input.value.trim();
+    tests[idx].score = val === '' ? null : parseFloat(val);
+    updateAll();
+    if (sharedMode || !students[currentStudentIndex] || !students[currentStudentIndex].id) return;
+    const testId = input.dataset.testId;
+    if (!testId) return;
+    clearTimeout(saveScoreTimer);
+    saveScoreTimer = setTimeout(async () => {
+        const s = students[currentStudentIndex];
+        await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { score: tests[idx].score });
+        showToast('Saved', 'success');
+    }, 600);
+}
+
+// ===================== STATISTICS =====================
+function getAverage() {
+    const scores = tests.filter(t => t.score !== null && !isNaN(t.score)).map(t => t.score);
+    if (scores.length === 0) return null;
+    return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
+function getLatestScore() {
+    for (let i = tests.length - 1; i >= 0; i--) {
+        if (tests[i].score !== null && !isNaN(tests[i].score)) {
+            return { score: tests[i].score, name: tests[i].name };
+        }
+    }
+    return null;
+}
+
+function getTrend() {
+    const scores = tests.filter(t => t.score !== null && !isNaN(t.score)).map(t => t.score);
+    if (scores.length < 2) return null;
+    const last = scores[scores.length - 1];
+    const prev = scores[scores.length - 2];
+    return last - prev;
+}
+
+// ===================== BANNER =====================
+function updateBanner() {
+    const avg = getAverage();
+    const apScore = getAPScore(avg);
+    const latest = getLatestScore();
+    const trend = getTrend();
+
+    const estAvg = document.getElementById('estAvg');
+    const estAP = document.getElementById('estAP');
+    const estLatest = document.getElementById('estLatest');
+    const estLatestName = document.getElementById('estLatestName');
+    const estTrend = document.getElementById('estTrend');
+
+    estAvg.textContent = avg !== null ? avg.toFixed(1) : '--';
+    estAvg.className = 'est-value' + (apScore ? ` score-${apScore}` : '');
+
+    estAP.textContent = apScore !== null ? apScore : '--';
+    estAP.className = 'est-value' + (apScore ? ` score-${apScore}` : '');
+
+    if (latest) {
+        estLatest.textContent = latest.score;
+        estLatestName.textContent = latest.name;
+    } else {
+        estLatest.textContent = '--';
+        estLatestName.textContent = '';
+    }
+
+    if (trend !== null) {
+        const arrow = trend > 0 ? '\u2191' : trend < 0 ? '\u2193' : '\u2192';
+        const color = trend > 0 ? 'score-5' : trend < 0 ? 'score-2' : '';
+        estTrend.textContent = `${arrow} ${trend > 0 ? '+' : ''}${trend.toFixed(1)}`;
+        estTrend.className = 'est-value ' + color;
+    } else {
+        estTrend.textContent = '--';
+        estTrend.className = 'est-value';
+    }
+}
+
+// ===================== CHARTS =====================
+function updateCharts() {
+    const subject = getCurrentSubject();
+    document.getElementById('barChartTitle').textContent = subject + ' Score Bar Chart';
+    document.getElementById('lineChartTitle').textContent = subject + ' Score Trend (Line Chart)';
+
+    const labels = [];
+    const scores = [];
+    const bottomLines = [];
+
+    tests.forEach(t => {
+        if (t.score !== null && !isNaN(t.score)) {
+            // Split long labels into multiple lines for chart readability
+            let label = t.name;
+            if (label.length > 14) {
+                label = label.split(' ').reduce((lines, word) => {
+                    const last = lines[lines.length - 1];
+                    if (last && (last + ' ' + word).length <= 16) {
+                        lines[lines.length - 1] = last + ' ' + word;
+                    } else {
+                        lines.push(word);
+                    }
+                    return lines;
+                }, []);
+            }
+            labels.push(label);
+            scores.push(t.score);
+            bottomLines.push(t.bottomLine);
+        }
+    });
+
+    // Bar Chart
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    if (barChartInstance) barChartInstance.destroy();
+    barChartInstance = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '5 Mark Bottom Line',
+                    data: bottomLines,
+                    backgroundColor: 'rgba(234, 179, 8, 0.25)',
+                    borderColor: '#eab308',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    order: 2,
+                },
+                {
+                    label: 'Score',
+                    data: scores,
+                    backgroundColor: scores.map(s => {
+                        const ap = getAPScore(s);
+                        if (ap === 5) return 'rgba(22,163,74,0.55)';
+                        if (ap === 4) return 'rgba(37,99,235,0.55)';
+                        if (ap === 3) return 'rgba(217,119,6,0.55)';
+                        return 'rgba(220,38,38,0.55)';
+                    }),
+                    borderColor: scores.map(s => {
+                        const ap = getAPScore(s);
+                        if (ap === 5) return '#16a34a';
+                        if (ap === 4) return '#2563eb';
+                        if (ap === 3) return '#d97706';
+                        return '#dc2626';
+                    }),
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    order: 1,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 11 } } },
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: '#f0f0f0' } },
+                x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } }
+            }
+        }
+    });
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    if (lineChartInstance) lineChartInstance.destroy();
+    lineChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '5 Mark Bottom Line',
+                    data: bottomLines,
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234,179,8,0.08)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0,
+                },
+                {
+                    label: 'Score',
+                    data: scores,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.10)',
+                    borderWidth: 3,
+                    pointBackgroundColor: scores.map(s => {
+                        const ap = getAPScore(s);
+                        if (ap === 5) return '#16a34a';
+                        if (ap === 4) return '#2563eb';
+                        if (ap === 3) return '#d97706';
+                        return '#dc2626';
+                    }),
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    fill: true,
+                    tension: 0.3,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 11 } } },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(ctx) {
+                            if (ctx.dataset.label === 'Score') {
+                                const ap = getAPScore(ctx.raw);
+                                return `Estimated AP Score: ${ap}`;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: '#f0f0f0' } },
+                x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } }
+            }
+        }
+    });
+}
+
+// ===================== ADD / REMOVE TEST =====================
+async function addTest() {
+    const name = prompt('Enter test name:', 'Test ' + (tests.length + 1));
+    if (!name) return;
+    const s = students[currentStudentIndex];
+    if (!s || !s.id) return;
+    const data = await api('POST', '/api/students/' + s.id + '/tests', { name, bottomLine: getBottomLine() });
+    if (data && data.error) {
+        showToast(data.error, 'error');
+        return;
+    }
+    if (data) {
+        tests.push({ id: data.id, name: data.name, score: data.score != null ? data.score : null, bottomLine: data.bottom_line || getBottomLine(), position: data.position });
+        updateAll();
+    }
+}
+
+async function resetAll() {
+    if (!confirm('Are you sure you want to reset all scores?')) return;
+    const s = students[currentStudentIndex];
+    if (!s || !s.id) return;
+    for (const t of tests) {
+        if (t.id) await api('PUT', '/api/students/' + s.id + '/tests/' + t.id, { score: null });
+    }
+    tests.forEach(t => { t.score = null; });
+    updateAll();
+    showToast('Scores reset.', 'success');
+}
+
+// ===================== EXPORT / IMPORT =====================
+function exportData() {
+    saveCurrentStudent();
+    const name = currentStudentIndex < students.length ? students[currentStudentIndex].name : 'report';
+    const data = currentStudentIndex < students.length
+        ? { name: students[currentStudentIndex].name, grade: students[currentStudentIndex].grade, subject: students[currentStudentIndex].subject, tests }
+        : { students, currentStudentIndex };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ap_scores_' + (name || 'report') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        try {
+            const data = JSON.parse(text);
+            const s = students[currentStudentIndex];
+            if (!s || !s.id) return;
+            const list = data.tests || (data.students && data.students[0] && data.students[0].tests);
+            if (!Array.isArray(list)) return;
+            for (let i = 0; i < tests.length && i < list.length; i++) {
+                if (tests[i].id && list[i] != null)
+                    await api('PUT', '/api/students/' + s.id + '/tests/' + tests[i].id, { score: list[i].score != null ? list[i].score : null });
+            }
+            tests.forEach((t, i) => { t.score = list[i] != null && list[i].score != null ? list[i].score : null; });
+            updateAll();
+            showToast('Imported.', 'success');
+        } catch (err) {
+            showToast('Invalid JSON file.', 'error');
+        }
+    };
+    input.click();
+}
+
+// ===================== SCREENSHOT =====================
+function screenshotPage(btn) {
+    const container = document.querySelector('.container');
+    if (!container) return;
+    btn.disabled = true;
+    btn.textContent = 'Capturing...';
+    const origOverflow = container.style.overflow;
+    container.style.overflow = 'visible';
+    html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        width: container.scrollWidth,
+        height: container.scrollHeight,
+    }).then(function(canvas) {
+        const name = currentStudentIndex < students.length ? students[currentStudentIndex].name : 'report';
+        const link = document.createElement('a');
+        link.download = 'ap_scores_' + (name || 'report') + '_' + new Date().toISOString().slice(0, 10) + '.png';
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch(function(err) {
+        showToast('Screenshot failed: ' + err.message, 'error');
+    }).finally(function() {
+        container.style.overflow = origOverflow;
+        btn.disabled = false;
+        btn.textContent = 'Screenshot';
+    });
+}
+
+// ===================== UPDATE ALL =====================
+function updateAll() {
+    if (students.length > 0) {
+        var est = document.getElementById('estimatedBanner');
+        if (est) est.style.display = '';
+        var charts = document.querySelector('.charts-conversion-section');
+        if (charts) charts.style.display = '';
+    }
+    renderTable();
+    updateBanner();
+    updateCharts();
+    const avg = getAverage();
+    renderConversionTable(avg !== null ? Math.round(avg) : null);
+}
+
+// ===================== AUTH & ROUTING =====================
+function goGoogleLogin() {
+    const state = (window.location.pathname || '').match(/^\/invite\/([^/]+)/) ? 'invite::' + (window.location.pathname.match(/^\/invite\/([^/]+)/)[1]) : 'login';
+    window.location.href = '/api/auth/google?state=' + encodeURIComponent(state);
+}
+function handlePasswordLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    document.getElementById('loginError').textContent = '';
+    fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    }).then(r => r.json()).then(data => {
+        if (data.token) {
+            setToken(data.token);
+            document.getElementById('loginOverlay').classList.add('hidden');
+            initApp(data);
+        } else {
+            document.getElementById('loginError').textContent = data.error || 'Login failed';
+        }
+    }).catch(() => { document.getElementById('loginError').textContent = 'Network error'; });
+    return false;
+}
+function doLogout() {
+    setToken(null);
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('appContainer').style.display = 'none';
+}
+
+async function checkExistingAuth() {
+    const token = getToken();
+    if (!token) return false;
+    const data = await api('GET', '/api/auth/verify');
+    if (data && !data.error) {
+        currentUser = data;
+        document.getElementById('loginOverlay').classList.add('hidden');
+        initApp(data);
+        return true;
+    }
+    return false;
+}
+
+function initApp(user) {
+    currentUser = user;
+    const container = document.getElementById('appContainer');
+    container.style.display = 'block';
+    document.getElementById('authBar').style.display = 'flex';
+    document.getElementById('authName').textContent = user.displayName || user.display_name || 'User';
+    const roleEl = document.getElementById('authRoleBadge');
+    roleEl.textContent = user.role === 'teacher' ? 'Teacher' : 'Student';
+    roleEl.className = 'role-badge ' + (user.role === 'teacher' ? 'role-teacher' : 'role-student');
+    if (user.role === 'teacher') {
+        document.querySelector('.student-info').style.display = 'flex';
+        document.getElementById('toolbar').style.display = 'flex';
+        initTeacherView();
+    } else {
+        document.querySelector('.student-info').style.display = 'none';
+        document.getElementById('toolbar').style.display = 'none';
+        document.getElementById('sharedBanner').style.display = 'block';
+        document.getElementById('sharedStudentName').textContent = user.displayName || user.display_name || '';
+        document.getElementById('sharedSubject').textContent = '';
+        document.getElementById('sharedFooterToolbar').style.display = 'flex';
+        sharedMode = true;
+        initStudentView();
+    }
+}
+
+async function initTeacherView() {
+    const data = await api('GET', '/api/students');
+    if (!data || Array.isArray(data) === false) return;
+    students = data.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, score: t.score, bottomLine: t.bottomLine || 84, position: t.position })) }));
+    if (students.length === 0) {
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        if (thead) thead.innerHTML = '<tr><th class="col-name">No students yet</th></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:#64748b;">Click "+ Add" to add a student.</td></tr>';
+        document.getElementById('estimatedBanner').style.display = 'none';
+        document.querySelector('.charts-conversion-section').style.display = 'none';
+        return;
+    }
+    currentStudentIndex = 0;
+    loadStudent(0);
+    renderStudentSelect();
+    applyEditMode();
+    updateAll();
+}
+
+async function initStudentView() {
+    const data = await api('GET', '/api/me');
+    if (!data || data.error) return;
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, score: t.score, bottomLine: t.bottomLine || 84, position: t.position })) }];
+    currentStudentIndex = 0;
+    loadStudent(0);
+    document.getElementById('sharedSubject').textContent = '(' + (data.subject || 'AP CSA') + ')';
+    updateAll();
+}
+
+// Invite page
+async function initInvitePage(token) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    const data = await fetch('/api/invite/' + token).then(r => r.ok ? r.json() : null);
+    const container = document.getElementById('appContainer');
+    if (!data) {
+        container.innerHTML = '<div class="link-error-page"><h2>Invalid or expired invite link</h2></div>';
+        return;
+    }
+    if (data.used) {
+        container.innerHTML = '<div class="link-error-page"><h2>This invite has already been used.</h2></div>';
+        return;
+    }
+    if (data.expired) {
+        container.innerHTML = '<div class="link-error-page"><h2>This invite link has expired. Ask your teacher for a new one.</h2></div>';
+        return;
+    }
+    container.innerHTML = '<div class="invite-page"><h2>Invite: ' + (data.studentName || '').replace(/</g, '&lt;') + '</h2><p>Sign in with Google to activate your account.</p><button type="button" class="btn-google" onclick="goGoogleLogin()">Sign in with Google</button></div>';
+}
+
+// Viewer link page (public)
+async function initViewerLinkView(token) {
+    const data = await fetch('/api/view/link/' + token).then(r => r.ok ? r.json() : null);
+    document.getElementById('loginOverlay').classList.add('hidden');
+    const container = document.getElementById('appContainer');
+    if (!data || !data.students || data.students.length === 0) {
+        container.innerHTML = '<div class="link-error-page"><h2>Invalid or expired link</h2></div>';
+        return;
+    }
+    viewerLinkData = data;
+    students = data.students.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, score: t.score, bottomLine: t.bottomLine || 84 })) }));
+    currentStudentIndex = 0;
+    loadStudent(0);
+    sharedMode = true;
+    document.querySelector('.report-header .auth-bar').style.display = 'none';
+    document.querySelector('.student-info').style.display = 'flex';
+    document.getElementById('studentSelect').innerHTML = '';
+    students.forEach((s, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = s.name;
+        if (i === 0) opt.selected = true;
+        document.getElementById('studentSelect').appendChild(opt);
+    });
+    document.querySelector('.student-info .edit-only').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('sharedBanner').style.display = 'block';
+    document.getElementById('sharedStudentName').textContent = data.name || 'View only';
+    document.getElementById('sharedSubject').textContent = '';
+    document.getElementById('sharedFooterToolbar').style.display = 'flex';
+    renderStudentSelect();
+    updateAll();
+}
+
+// Student share view (public)
+async function initShareView(token) {
+    const data = await fetch('/api/share/' + token).then(r => r.ok ? r.json() : null);
+    document.getElementById('loginOverlay').classList.add('hidden');
+    const container = document.getElementById('appContainer');
+    if (!data || data.error) {
+        container.innerHTML = '<div class="link-error-page"><h2>Invalid or expired link</h2></div>';
+        return;
+    }
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, score: t.score, bottomLine: t.bottomLine || 84 })) }];
+    currentStudentIndex = 0;
+    loadStudent(0);
+    sharedMode = true;
+    document.querySelector('.report-header .auth-bar').style.display = 'none';
+    document.querySelector('.student-info').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('sharedBanner').style.display = 'block';
+    document.getElementById('sharedStudentName').textContent = data.name;
+    document.getElementById('sharedSubject').textContent = '(' + (data.subject || 'AP CSA') + ')';
+    document.getElementById('sharedFooterToolbar').style.display = 'flex';
+    updateAll();
+}
+
+// Manage Accounts modal
+async function openAccountsModal() {
+    const users = await api('GET', '/api/users');
+    const studentsList = await api('GET', '/api/students');
+    if (!users || !studentsList) return;
+    const tbody = document.getElementById('accountsTableBody');
+    tbody.innerHTML = '';
+    studentsList.forEach(s => {
+        const u = users.find(u => u.studentId === s.id);
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (s.name || '').replace(/</g, '&lt;') + '</td><td>' + (u ? (u.email || 'Registered') : 'Pending invite') + '</td><td>' +
+            (!u ? '<button type="button" onclick="generateInviteForStudent(\'' + s.id + '\')">Generate Invite Link</button>' : '') + '</td>';
+        tbody.appendChild(tr);
+    });
+    document.getElementById('modalAccounts').classList.remove('hidden');
+}
+async function generateInviteForStudent(studentId) {
+    const data = await api('POST', '/api/students/' + studentId + '/invite');
+    if (data && data.url) {
+        if (navigator.clipboard) navigator.clipboard.writeText(data.url);
+        showToast('Invite link copied to clipboard.', 'success');
+    }
+}
+
+// Viewer Links modal
+async function openViewerLinksModal() {
+    const list = await api('GET', '/api/viewer-links');
+    const allStudents = await api('GET', '/api/students');
+    if (!allStudents || !Array.isArray(allStudents)) return;
+
+    const createStudentsEl = document.getElementById('viewerLinkCreateStudents');
+    createStudentsEl.innerHTML = allStudents.map(s => {
+        const safeName = (s.name || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        return '<label style="display:block;padding:4px 0;"><input type="checkbox" class="viewer-link-create-cb" data-student-id="' + s.id + '" /> ' + safeName + '</label>';
+    }).join('');
+    document.getElementById('newViewerLinkName').value = '';
+
+    const div = document.getElementById('viewerLinksList');
+    div.innerHTML = (list || []).map(v => {
+        const url = location.origin + '/view/link/' + v.token;
+        const safeName = (v.name || '').replace(/</g, '&lt;').replace(/'/g, "\\'");
+        const studentIds = v.studentIds || [];
+        const editCheckboxes = allStudents.map(s => {
+            const checked = studentIds.indexOf(s.id) !== -1 ? ' checked' : '';
+            const sn = (s.name || '').replace(/</g, '&lt;');
+            return '<label style="display:block;padding:2px 0;"><input type="checkbox" class="viewer-link-edit-cb" data-link-id="' + v.id + '" data-student-id="' + s.id + '"' + checked + ' /> ' + sn + '</label>';
+        }).join('');
+        return '<div class="viewer-link-item" data-link-id="' + v.id + '" style="margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;">' +
+            '<div class="viewer-link-header">' +
+            '<strong>' + safeName + '</strong> ' +
+            '<button type="button" onclick="copyViewerUrl(\'' + url.replace(/'/g, "\\'") + '\')">Copy link</button> ' +
+            '<button type="button" onclick="toggleEditViewerLink(\'' + v.id + '\')">Edit</button> ' +
+            '<button type="button" onclick="deleteViewerLink(\'' + v.id + '\')">Delete</button>' +
+            '</div>' +
+            '<div class="viewer-link-edit-box" id="editBox_' + v.id + '" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;">' +
+            '<input type="text" id="editName_' + v.id + '" value="' + safeName + '" placeholder="Link name" style="width:100%;max-width:240px;padding:6px;margin-bottom:8px;box-sizing:border-box;" />' +
+            '<div style="font-size:12px;margin-bottom:4px;">Select students:</div>' +
+            '<div style="max-height:140px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:6px;background:#fff;margin-bottom:8px;">' + editCheckboxes + '</div>' +
+            '<button type="button" onclick="saveEditViewerLink(\'' + v.id + '\')" style="padding:4px 12px;margin-right:6px;">Save</button>' +
+            '<button type="button" onclick="toggleEditViewerLink(\'' + v.id + '\')">Cancel</button>' +
+            '</div>' +
+            '</div>';
+    }).join('') || '<p style="color:#64748b;">No viewer links yet. Create one above.</p>';
+    document.getElementById('modalViewerLinks').classList.remove('hidden');
+}
+
+function toggleEditViewerLink(linkId) {
+    const box = document.getElementById('editBox_' + linkId);
+    if (!box) return;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function createViewerLink() {
+    const name = document.getElementById('newViewerLinkName').value.trim();
+    if (!name) { showToast('Enter a name.', 'error'); return; }
+    const checked = document.querySelectorAll('.viewer-link-create-cb:checked');
+    const studentIds = Array.from(checked).map(cb => cb.getAttribute('data-student-id'));
+    if (studentIds.length === 0) {
+        showToast('Select at least one student.', 'error');
+        return;
+    }
+    const data = await api('POST', '/api/viewer-links', { name, studentIds });
+    if (data && data.url) {
+        if (navigator.clipboard) navigator.clipboard.writeText(data.url);
+        showToast('Link created and copied.', 'success');
+        openViewerLinksModal();
+    } else {
+        showToast(data && data.error ? data.error : 'Failed to create link', 'error');
+    }
+}
+
+async function saveEditViewerLink(linkId) {
+    const nameEl = document.getElementById('editName_' + linkId);
+    const name = (nameEl && nameEl.value || '').trim();
+    if (!name) { showToast('Enter a name.', 'error'); return; }
+    const checked = document.querySelectorAll('.viewer-link-edit-cb[data-link-id="' + linkId + '"]:checked');
+    const studentIds = Array.from(checked).map(cb => cb.getAttribute('data-student-id'));
+    if (studentIds.length === 0) {
+        showToast('Select at least one student.', 'error');
+        return;
+    }
+    const data = await api('PUT', '/api/viewer-links/' + linkId, { name, studentIds });
+    if (data && !data.error) {
+        showToast('Link updated.', 'success');
+        toggleEditViewerLink(linkId);
+        openViewerLinksModal();
+    } else {
+        showToast(data && data.error ? data.error : 'Failed to update', 'error');
+    }
+}
+
+function copyViewerUrl(url) {
+    if (navigator.clipboard) navigator.clipboard.writeText(url);
+    showToast('Copied!', 'success');
+}
+async function deleteViewerLink(id) {
+    await api('DELETE', '/api/viewer-links/' + id);
+    showToast('Link deleted.', 'success');
+    openViewerLinksModal();
+}
+
+// Share link for current student
+async function shareLinkForStudent() {
+    const s = students[currentStudentIndex];
+    if (!s || !s.id) return;
+    const data = await api('POST', '/api/students/' + s.id + '/share');
+    if (data && data.url) {
+        if (navigator.clipboard) navigator.clipboard.writeText(data.url);
+        showToast('Share link copied to clipboard.', 'success');
+    }
+}
+
+// ===================== INIT =====================
+(function() {
+    const path = (window.location.pathname || '').replace(/\/$/, '') || '/';
+    const params = new URLSearchParams(window.location.search);
+    const authToken = params.get('auth_token');
+    const error = params.get('error');
+    if (authToken) {
+        setToken(authToken);
+        history.replaceState({}, '', path || '/');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        fetch('/api/auth/verify', { headers: { Authorization: 'Bearer ' + authToken } }).then(r => r.json()).then(data => {
+            if (data && !data.error) initApp(data);
+            else document.getElementById('loginOverlay').classList.remove('hidden');
+        });
+        return;
+    }
+    if (error) {
+        document.getElementById('loginError').textContent =
+            error === 'no-account' ? 'No account found. Use your invite link or sign in as teacher.' :
+            error === 'invite_expired' ? 'Invite expired or already used.' :
+            error === 'google_not_configured' ? 'Google sign-in is not configured. Use username and password.' : 'Sign-in failed.';
+    }
+    if (path.match(/^\/invite\/([^/]+)/)) {
+        initInvitePage(path.match(/^\/invite\/([^/]+)/)[1]);
+        return;
+    }
+    if (path.match(/^\/view\/link\/([^/]+)/)) {
+        initViewerLinkView(path.match(/^\/view\/link\/([^/]+)/)[1]);
+        return;
+    }
+    if (path.match(/^\/view\/student\/([^/]+)/)) {
+        initShareView(path.match(/^\/view\/student\/([^/]+)/)[1]);
+        return;
+    }
+    checkExistingAuth().then(ok => {
+        if (!ok) document.getElementById('loginOverlay').classList.remove('hidden');
+    });
+})();
+</script>
+
+</body>
+</html>
