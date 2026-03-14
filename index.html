@@ -712,7 +712,7 @@
 
     <!-- Subject filter: friendly pill switcher -->
     <div class="subject-filter" id="subjectFilter" data-filter="all" style="margin-bottom:14px;">
-        <span class="subject-filter-label">显示科目</span>
+        <span class="subject-filter-label">显示科目（报考）</span>
         <div class="subject-filter-pills">
             <button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter('all')">全部</button>
             <button type="button" class="subject-pill" data-value="AP CSA" onclick="setSubjectFilter('AP CSA')">AP CSA</button>
@@ -916,11 +916,13 @@ const MCQ_MAX_WRONG = 5;
 /** FRQ 达标最低分（按科目，分数为 FRQ 卷面分） */
 const frqMinForPass = { 'AP CSA': 36, 'AP CSP': 35 };
 
-/** 当前学生实际有的科目（从 tests 里取） */
+/** 报考科目：当前学生实际有的科目（从 tests 里取）；无考试时用学生的 Subject 作为默认一门 */
 function getSubjectsInCurrentData() {
     var set = {};
     tests.forEach(function(t) { set[t.subject || 'AP CSA'] = true; });
-    return Object.keys(set);
+    var list = Object.keys(set);
+    if (list.length === 0) list = [getCurrentSubject()];
+    return list;
 }
 function setSubjectFilter(value) {
     var el = document.getElementById('subjectFilter');
@@ -939,9 +941,10 @@ function getVisibleSubjects() {
     var single = el && el.getAttribute('data-single-subject');
     if (single) return [single];
     var filter = (el && el.getAttribute('data-filter')) || 'all';
-    if (filter === 'all') return ['AP CSA', 'AP CSP'];
-    if (filter === 'AP CSA' || filter === 'AP CSP') return [filter];
-    return ['AP CSA', 'AP CSP'];
+    var examSubjects = getSubjectsInCurrentData();
+    if (filter === 'all') return examSubjects;
+    if (filter === 'AP CSA' || filter === 'AP CSP') return examSubjects.includes(filter) ? [filter] : examSubjects;
+    return examSubjects;
 }
 /** 分享/查看模式下只显示该学生有的科目；仅一门时隐藏科目切换 */
 function renderSubjectFilter() {
@@ -967,11 +970,16 @@ function renderSubjectFilter() {
     } else {
         el.style.display = 'flex';
         el.removeAttribute('data-single-subject');
-        el.setAttribute('data-filter', 'all');
+        var examSubjects = getSubjectsInCurrentData();
         var container = el.querySelector('.subject-filter-pills');
-        if (container && container.querySelectorAll('.subject-pill').length !== 3) {
-            container.innerHTML = '<button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter(\'all\')">全部</button><button type="button" class="subject-pill" data-value="AP CSA" onclick="setSubjectFilter(\'AP CSA\')">AP CSA</button><button type="button" class="subject-pill" data-value="AP CSP" onclick="setSubjectFilter(\'AP CSP\')">AP CSP</button>';
-        }
+        var currentFilter = (el && el.getAttribute('data-filter')) || 'all';
+        if (!examSubjects.includes(currentFilter) && currentFilter !== 'all') currentFilter = 'all';
+        el.setAttribute('data-filter', currentFilter);
+        var pillsHtml = '<button type="button" class="subject-pill' + (currentFilter === 'all' ? ' active' : '') + '" data-value="all" onclick="setSubjectFilter(\'all\')">全部</button>';
+        examSubjects.forEach(function(s) {
+            pillsHtml += '<button type="button" class="subject-pill' + (currentFilter === s ? ' active' : '') + '" data-value="' + s.replace(/"/g, '&quot;') + '" onclick="setSubjectFilter(\'' + s.replace(/'/g, "\\'") + '\')">' + s.replace(/</g, '&lt;') + '</button>';
+        });
+        if (container) container.innerHTML = pillsHtml;
     }
 }
 function onSubjectFilterChange() {
@@ -1650,6 +1658,7 @@ function updateAll() {
         var charts = document.querySelector('.charts-conversion-section');
         if (charts) charts.style.display = '';
     }
+    renderSubjectFilter();
     renderTable();
     updateBanner();
     updateCharts();
