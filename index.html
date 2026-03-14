@@ -210,6 +210,14 @@
             color: #ccc;
             font-weight: 400;
         }
+        table.score-table td.td-score span {
+            display: inline-block;
+            padding: 8px 4px;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 2.5em;
+            text-align: center;
+        }
         table.score-table td.td-ap {
             background: #f0fdf4;
             font-weight: 700;
@@ -699,8 +707,8 @@
                 <span class="est-label">Trend</span>
                 <span class="est-value" id="estTrend">--</span>
             </div>
-            <div class="est-block est-mcq-frq" title="Per conversion table: ≤5 wrong = pass, eligible for 5">
-                <span class="est-label">MCQ (≤5 wrong)</span>
+            <div class="est-block est-mcq-frq" title="MCQ pass: score &gt; (42-5)×1.3095. FRQ pass: score &gt; 12.5×1.8.">
+                <span class="est-label">MCQ (Pass)</span>
                 <span class="est-value" id="estMcq">--</span>
             </div>
             <div class="est-block est-mcq-frq" title="Per conversion table: FRQ ≥36 (CSA) / ≥35 (CSP) = pass">
@@ -914,10 +922,23 @@ const conversionTitles = {
     'AP CSP': 'Computer Science Principles',
 };
 const fiveMarkBottomLines = { 'AP CSA': 84, 'AP CSP': 90 };
-/** 按官方转换表：MCQ 错题数≤5 即达标，才有资格冲击合成分数 5 分区间（84+） */
-const MCQ_MAX_WRONG = 5;
-/** 按官方转换表：FRQ Section II 卷面分达到该值即达标，与 MCQ 共同决定是否进入 5 分区间 */
-const frqMinForPass = { 'AP CSA': 36, 'AP CSP': 35 };
+/** MCQ pass: score > (42-5)*weight. */
+const MCQ_PASS_WEIGHT = 1.3095;
+const MCQ_PASS_THRESHOLD = (42 - 5) * MCQ_PASS_WEIGHT;  // 37 * 1.3095 ≈ 48.45
+/** FRQ pass: score > 12.5 * 1.8 = 22.5 */
+const FRQ_PASS_THRESHOLD = 12.5 * 1.8;  // 22.5
+function getMcqPassThreshold() { return MCQ_PASS_THRESHOLD; }
+function getFrqPassThreshold(subj) { return FRQ_PASS_THRESHOLD; }
+
+/** Total score = round(MCQ + FRQ); integer only. Used for display and AP conversion. */
+function getComputedTotalScore(t) {
+    var mcq = t.mcqWrong;
+    var frq = t.frqScore;
+    if (mcq != null && mcq !== '' && frq != null && frq !== '' && !isNaN(Number(mcq)) && !isNaN(Number(frq)))
+        return Math.round(Number(mcq) + Number(frq));
+    if (t.score != null && !isNaN(Number(t.score))) return Math.round(Number(t.score));
+    return null;
+}
 
 /** Enrolled subjects: from tests, or student.subjects from API, or default [current subject] */
 function getSubjectsInCurrentData() {
@@ -1081,6 +1102,7 @@ function loadStudent(index) {
     if (index >= students.length) return;
     const s = students[index];
     tests = s.tests || [];
+    tests.forEach(function(t) { t.score = getComputedTotalScore(t); });
     sortTestsByExamDate();
     const nameEl = document.getElementById('studentName');
     const gradeEl = document.getElementById('studentGrade');
@@ -1228,7 +1250,7 @@ function renderTable() {
         t.bottomLine = getBottomLine(subj);
     });
 
-    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Exam Date</th><th>Score (/100)</th><th>AP Score</th><th>MCQ (≤5 wrong)</th><th>FRQ (Pass)</th><th></th></tr>';
+    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Exam Date</th><th>Score (/100)</th><th>AP Score</th><th>MCQ (Pass)</th><th>FRQ (Pass)</th><th></th></tr>';
 
     var rowNum = 0;
     var rowsHTML = '';
@@ -1236,20 +1258,19 @@ function renderTable() {
         if (!getVisibleSubjects().includes(t.subject || 'AP CSA')) return;
         rowNum++;
         var bl = t.bottomLine;
-        var val = t.score !== null ? t.score : '';
-        var ap = t.score !== null ? getAPScore(t.score, t.subject) : null;
+        var totalScore = getComputedTotalScore(t);
+        var ap = totalScore !== null ? getAPScore(totalScore, t.subject) : null;
         var apBadge = ap !== null ? '<span class="score-badge badge-' + ap + '">' + ap + '</span>' : '<span style="color:#ccc;">--</span>';
-        var scoreClass = t.score !== null ? (t.score >= bl ? 'score-above' : 'score-below') : '';
-        var scoreDisabled = editMode ? '' : 'readonly';
+        var scoreClass = totalScore !== null ? (totalScore >= bl ? 'score-above' : 'score-below') : '';
         var testId = t.id || i;
         var subj = t.subject || 'AP CSA';
         var mcqVal = t.mcqWrong != null && t.mcqWrong !== '' ? t.mcqWrong : '';
-        var mcqOk = t.mcqWrong != null && t.mcqWrong !== '' && !isNaN(Number(t.mcqWrong)) && Number(t.mcqWrong) <= MCQ_MAX_WRONG;
+        var mcqOk = t.mcqWrong != null && t.mcqWrong !== '' && !isNaN(Number(t.mcqWrong)) && Number(t.mcqWrong) > MCQ_PASS_THRESHOLD;
         var mcqBadge = t.mcqWrong != null && t.mcqWrong !== '' && !isNaN(Number(t.mcqWrong)) ? (mcqOk ? '✓' : '✗') : '—';
         var mcqStatusClass = mcqBadge === '✓' ? ' mcq-frq-pass' : (mcqBadge === '✗' ? ' mcq-frq-fail' : '');
         var frqVal = t.frqScore != null && t.frqScore !== '' ? t.frqScore : '';
-        var frqMin = frqMinForPass[subj] != null ? frqMinForPass[subj] : 36;
-        var frqOk = t.frqScore != null && t.frqScore !== '' && !isNaN(Number(t.frqScore)) && Number(t.frqScore) >= frqMin;
+        var frqHalf = getFrqPassThreshold(subj);
+        var frqOk = t.frqScore != null && t.frqScore !== '' && !isNaN(Number(t.frqScore)) && Number(t.frqScore) > frqHalf;
         var frqBadge = t.frqScore != null && t.frqScore !== '' && !isNaN(Number(t.frqScore)) ? (frqOk ? '✓' : '✗') : '—';
         var frqStatusClass = frqBadge === '✓' ? ' mcq-frq-pass' : (frqBadge === '✗' ? ' mcq-frq-fail' : '');
         var mcqDisplay = (mcqVal !== '' && mcqVal !== undefined && !isNaN(Number(mcqVal))) ? Number(mcqVal).toFixed(3) : (mcqVal !== '' && mcqVal !== undefined ? mcqVal : '—');
@@ -1259,20 +1280,22 @@ function renderTable() {
         var nameCell = editMode ? '<input type="text" class="test-name-input" value="' + (t.name || '').replace(/"/g, '&quot;') + '" placeholder="Test name" data-index="' + i + '" data-test-id="' + testId + '" onchange="onTestNameChange(this)" onblur="onTestNameChange(this)" style="width:100%;min-width:80px;padding:4px 6px;box-sizing:border-box;">' : '<span title="' + (t.name || '').replace(/"/g, '&quot;') + '">' + (t.name || '').replace(/</g, '&lt;') + '</span>';
         var examDateDisplay = (t.examDate && String(t.examDate).trim()) ? String(t.examDate).trim().slice(0, 10) : '—';
         var examDateCell = editMode ? '<input type="date" class="exam-date-input" value="' + (examDateDisplay !== '—' ? examDateDisplay : '') + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onExamDateChange(this)" style="width:100%;min-width:100px;padding:4px 6px;box-sizing:border-box;">' : examDateDisplay;
-        rowsHTML += '<tr><td class="td-num">' + rowNum + '</td><td class="td-name">' + nameCell + '</td><td class="td-exam-date">' + examDateCell + '</td><td class="td-score"><input type="number" min="0" max="100" step="0.1" value="' + val + '" placeholder="--" class="' + scoreClass + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onScoreChange(this)" oninput="onScoreChange(this)" ' + scoreDisabled + '></td><td class="td-ap">' + apBadge + '</td><td class="td-mcq">' + mcqInput + ' <span class="mcq-frq-status' + mcqStatusClass + '">' + mcqBadge + '</span></td><td class="td-frq">' + frqInput + ' <span class="mcq-frq-status' + frqStatusClass + '">' + frqBadge + '</span></td><td class="td-action">' + (editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : '') + '</td></tr>';
+        var scoreDisplay = totalScore !== null ? String(totalScore) : '--';
+        rowsHTML += '<tr><td class="td-num">' + rowNum + '</td><td class="td-name">' + nameCell + '</td><td class="td-exam-date">' + examDateCell + '</td><td class="td-score"><span class="' + scoreClass + '" title="MCQ + FRQ rounded">' + scoreDisplay + '</span></td><td class="td-ap">' + apBadge + '</td><td class="td-mcq">' + mcqInput + ' <span class="mcq-frq-status' + mcqStatusClass + '">' + mcqBadge + '</span></td><td class="td-frq">' + frqInput + ' <span class="mcq-frq-status' + frqStatusClass + '">' + frqBadge + '</span></td><td class="td-action">' + (editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : '') + '</td></tr>';
     });
 
     var visTests = getVisibleTests();
-    var avg = visTests.length ? visTests.reduce(function(a, t) { return a + (t.score != null && !isNaN(t.score) ? t.score : 0); }, 0) / Math.max(1, visTests.filter(function(t) { return t.score != null && !isNaN(t.score); }).length) : null;
-    if (visTests.filter(function(t) { return t.score != null && !isNaN(t.score); }).length === 0) avg = null;
+    var totalScores = visTests.map(getComputedTotalScore).filter(function(s) { return s != null && !isNaN(s); });
+    var avg = totalScores.length ? totalScores.reduce(function(a, b) { return a + b; }, 0) / totalScores.length : null;
     var firstSubj = visTests[0] && (visTests[0].subject || 'AP CSA');
     var apScore = avg !== null ? getAPScore(avg, firstSubj) : null;
     var apBadgeSummary = apScore !== null ? '<span class="score-badge badge-' + apScore + '">' + apScore + '</span>' : '--';
-    var mcqPassCount = visTests.filter(function(t) { var v = t.mcqWrong; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) <= MCQ_MAX_WRONG; }).length;
-    var frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var min = frqMinForPass[s] != null ? frqMinForPass[s] : 36; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) >= min; }).length;
+    var mcqPassCount = visTests.filter(function(t) { var v = t.mcqWrong; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) > MCQ_PASS_THRESHOLD; }).length;
+    var frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var half = getFrqPassThreshold(s); return v != null && v !== '' && !isNaN(Number(v)) && Number(v) > half; }).length;
     var mcqSummary = 'MCQ pass: ' + mcqPassCount + '/' + visTests.length;
     var frqSummary = 'FRQ pass: ' + frqPassCount + '/' + visTests.length;
-    rowsHTML += '<tr class="summary-row"><td></td><td style="text-align:left;padding-left:14px;">Average / Estimated</td><td></td><td>' + (avg !== null ? Math.round(avg) : '--') + '</td><td>' + apBadgeSummary + '</td><td colspan="2">' + mcqSummary + ' &nbsp; ' + frqSummary + '</td><td></td></tr>';
+    var avgDisplay = avg !== null ? (avg % 1 === 0 ? String(Math.round(avg)) : avg.toFixed(1)) : '--';
+    rowsHTML += '<tr class="summary-row"><td></td><td style="text-align:left;padding-left:14px;">Average / Estimated</td><td></td><td>' + avgDisplay + '</td><td>' + apBadgeSummary + '</td><td colspan="2">' + mcqSummary + ' &nbsp; ' + frqSummary + '</td><td></td></tr>';
     tbody.innerHTML = rowsHTML;
 }
 
@@ -1331,6 +1354,7 @@ function onMcqChange(input) {
     const val = input.value.trim();
     tests[idx].mcqWrong = val === '' ? null : parseFloat(val);
     if (isNaN(tests[idx].mcqWrong)) tests[idx].mcqWrong = null;
+    tests[idx].score = getComputedTotalScore(tests[idx]);
     updateAll();
     if (sharedMode || !students[currentStudentIndex] || !students[currentStudentIndex].id) return;
     const testId = input.dataset.testId;
@@ -1338,7 +1362,8 @@ function onMcqChange(input) {
     clearTimeout(saveMcqFrqTimer);
     saveMcqFrqTimer = setTimeout(async () => {
         const s = students[currentStudentIndex];
-        await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { mcqWrong: tests[idx].mcqWrong });
+        const t = tests[idx];
+        await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { mcqWrong: t.mcqWrong, score: t.score });
         showToast('Saved', 'success');
     }, 600);
 }
@@ -1347,6 +1372,7 @@ function onFrqChange(input) {
     const val = input.value.trim();
     tests[idx].frqScore = val === '' ? null : parseFloat(val);
     if (isNaN(tests[idx].frqScore)) tests[idx].frqScore = null;
+    tests[idx].score = getComputedTotalScore(tests[idx]);
     updateAll();
     if (sharedMode || !students[currentStudentIndex] || !students[currentStudentIndex].id) return;
     const testId = input.dataset.testId;
@@ -1354,7 +1380,8 @@ function onFrqChange(input) {
     clearTimeout(saveMcqFrqTimer);
     saveMcqFrqTimer = setTimeout(async () => {
         const s = students[currentStudentIndex];
-        await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { frqScore: tests[idx].frqScore });
+        const t = tests[idx];
+        await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { frqScore: t.frqScore, score: t.score });
         showToast('Saved', 'success');
     }, 600);
 }
@@ -1376,22 +1403,21 @@ function onExamDateChange(input) {
 
 // ===================== STATISTICS =====================
 function getAverage() {
-    const scores = tests.filter(t => t.score !== null && !isNaN(t.score)).map(t => t.score);
+    const scores = tests.map(getComputedTotalScore).filter(s => s != null && !isNaN(s));
     if (scores.length === 0) return null;
     return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
 function getLatestScore() {
     for (let i = tests.length - 1; i >= 0; i--) {
-        if (tests[i].score !== null && !isNaN(tests[i].score)) {
-            return { score: tests[i].score, name: tests[i].name };
-        }
+        const s = getComputedTotalScore(tests[i]);
+        if (s != null && !isNaN(s)) return { score: s, name: tests[i].name };
     }
     return null;
 }
 
 function getTrend() {
-    const scores = tests.filter(t => t.score !== null && !isNaN(t.score)).map(t => t.score);
+    const scores = tests.map(getComputedTotalScore).filter(s => s != null && !isNaN(s));
     if (scores.length < 2) return null;
     const last = scores[scores.length - 1];
     const prev = scores[scores.length - 2];
@@ -1406,8 +1432,8 @@ function updateBanner() {
     const latest = getLatestScore();
     const trend = getTrend();
     const visTests = getVisibleTests();
-    const mcqPassCount = visTests.filter(function(t) { var v = t.mcqWrong; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) <= MCQ_MAX_WRONG; }).length;
-    const frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var min = frqMinForPass[s] != null ? frqMinForPass[s] : 36; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) >= min; }).length;
+    const mcqPassCount = visTests.filter(function(t) { var v = t.mcqWrong; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) > MCQ_PASS_THRESHOLD; }).length;
+    const frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var half = getFrqPassThreshold(s); return v != null && v !== '' && !isNaN(Number(v)) && Number(v) > half; }).length;
 
     const estAvg = document.getElementById('estAvg');
     const estAP = document.getElementById('estAP');
@@ -1417,7 +1443,7 @@ function updateBanner() {
     const estMcq = document.getElementById('estMcq');
     const estFrq = document.getElementById('estFrq');
 
-    estAvg.textContent = avg !== null ? Math.round(avg) : '--';
+    estAvg.textContent = avg !== null ? (avg % 1 === 0 ? String(Math.round(avg)) : avg.toFixed(1)) : '--';
     estAvg.className = 'est-value' + (apScore ? ` score-${apScore}` : '');
 
     estAP.textContent = apScore !== null ? apScore : '--';
@@ -1460,7 +1486,8 @@ function updateCharts() {
 
     tests.forEach(t => {
         if (visible.length > 0 && !visible.includes(t.subject || 'AP CSA')) return;
-        if (t.score !== null && !isNaN(t.score)) {
+        const total = getComputedTotalScore(t);
+        if (total !== null && !isNaN(total)) {
             // Split long labels into multiple lines for chart readability
             let label = t.name;
             if (label.length > 14) {
@@ -1475,7 +1502,7 @@ function updateCharts() {
                 }, []);
             }
             labels.push(label);
-            scores.push(t.score);
+            scores.push(total);
             bottomLines.push(t.bottomLine);
         }
     });
