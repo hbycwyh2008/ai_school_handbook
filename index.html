@@ -668,8 +668,8 @@
     <div class="toolbar" id="toolbar">
         <button class="edit-btn" id="editToggleBtn" onclick="toggleEditMode()">Unlock Edit</button>
         <button class="edit-only" onclick="addTest()">+ Add Test</button>
-        <button class="edit-only" onclick="openViewerLinksModal()">Viewer Links (行政/申请)</button>
-        <button class="edit-only" onclick="shareLinkForStudent()">Share link (给学生)</button>
+        <button class="edit-only" onclick="openViewerLinksModal()">Viewer Links (Admin)</button>
+        <button class="edit-only" onclick="shareLinkForStudent()">Share link (Student)</button>
         <button onclick="exportData()">Export JSON</button>
         <button class="edit-only" onclick="importData()">Import JSON</button>
         <button id="screenshotBtn" onclick="screenshotPage(this)">Screenshot</button>
@@ -680,7 +680,7 @@
 
     <!-- Status strip: top of content (状态总览) -->
     <div class="status-strip" id="statusStrip">
-        <div class="status-strip-title">状态总览</div>
+        <div class="status-strip-title">Status Overview</div>
         <div class="estimated-banner" id="estimatedBanner">
             <div class="est-block">
                 <span class="est-label">Current Average</span>
@@ -699,12 +699,12 @@
                 <span class="est-label">Trend</span>
                 <span class="est-value" id="estTrend">--</span>
             </div>
-            <div class="est-block est-mcq-frq" title="按转换表：错题数≤5 即达标，有资格冲击 5 分">
-                <span class="est-label">MCQ(错≤5)</span>
+            <div class="est-block est-mcq-frq" title="Per conversion table: ≤5 wrong = pass, eligible for 5">
+                <span class="est-label">MCQ (≤5 wrong)</span>
                 <span class="est-value" id="estMcq">--</span>
             </div>
-            <div class="est-block est-mcq-frq" title="按转换表：FRQ 卷面分≥36(CSA)/35(CSP) 即达标">
-                <span class="est-label">FRQ(达标)</span>
+            <div class="est-block est-mcq-frq" title="Per conversion table: FRQ ≥36 (CSA) / ≥35 (CSP) = pass">
+                <span class="est-label">FRQ (Pass)</span>
                 <span class="est-value" id="estFrq">--</span>
             </div>
         </div>
@@ -712,9 +712,9 @@
 
     <!-- Subject filter: friendly pill switcher -->
     <div class="subject-filter" id="subjectFilter" data-filter="all" style="margin-bottom:14px;">
-        <span class="subject-filter-label">显示科目（报考）</span>
+        <span class="subject-filter-label">Subjects (Enrolled)</span>
         <div class="subject-filter-pills">
-            <button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter('all')">全部</button>
+            <button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter('all')">All</button>
             <button type="button" class="subject-pill" data-value="AP CSA" onclick="setSubjectFilter('AP CSA')">AP CSA</button>
             <button type="button" class="subject-pill" data-value="AP CSP" onclick="setSubjectFilter('AP CSP')">AP CSP</button>
         </div>
@@ -789,11 +789,11 @@
             <div class="body">
                 <label>Name *</label><input type="text" id="addStudentName" placeholder="Student name" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;" />
                 <label>Grade</label><input type="text" id="addStudentGrade" value="12" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;" />
-                <label>Subject</label>
-                <select id="addStudentSubject" style="width:100%;padding:8px;margin-bottom:12px;box-sizing:border-box;">
-                    <option value="AP CSA">AP CSA</option>
-                    <option value="AP CSP">AP CSP</option>
-                </select>
+                <label>Subjects (enrolled)</label>
+                <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="addStudentSubjectCSA" /> AP CSA</label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="addStudentSubjectCSP" /> AP CSP</label>
+                </div>
                 <div id="addStudentError" class="error"></div>
             </div>
             <div class="footer">
@@ -807,10 +807,10 @@
             <h3>Manage Accounts</h3>
             <div class="body">
                 <div id="accountsPendingSection" style="margin-bottom:20px;display:none;">
-                    <div style="font-weight:600;margin-bottom:8px;">待审核注册 (Pending)</div>
+                    <div style="font-weight:600;margin-bottom:8px;">Pending registrations</div>
                     <div id="accountsPendingList"></div>
                 </div>
-                <div style="font-weight:600;margin-bottom:8px;">学生账号 (Students)</div>
+                <div style="font-weight:600;margin-bottom:8px;">Students</div>
                 <table class="score-table" style="font-size:12px;"><thead><tr><th>Student</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="accountsTableBody"></tbody></table>
             </div>
@@ -819,15 +819,15 @@
     </div>
     <div id="modalViewerLinks" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal('modalViewerLinks')">
         <div class="modal-box" style="max-width:640px;">
-            <h3>Viewer Links (行政/申请老师)</h3>
+            <h3>Viewer Links (Admin)</h3>
             <div class="body">
                 <div id="viewerLinkCreateBox" style="margin-bottom:20px;padding:12px;background:#f8fafc;border-radius:8px;">
                     <div style="font-weight:600;margin-bottom:8px;">Create new link</div>
-                    <input type="text" id="newViewerLinkName" placeholder="Link name (e.g. 行政老师)" style="width:100%;max-width:240px;padding:6px 8px;margin-bottom:10px;box-sizing:border-box;display:block;" />
+                    <input type="text" id="newViewerLinkName" placeholder="Link name (e.g. Admin)" style="width:100%;max-width:240px;padding:6px 8px;margin-bottom:10px;box-sizing:border-box;display:block;" />
                     <div style="font-size:13px;margin-bottom:6px;">Select students this link can see:</div>
                     <div id="viewerLinkCreateStudents" style="max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:8px;background:#fff;"></div>
                     <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="newViewerLinkAllowScores" checked /> 允许该老师查看对应学生成绩
+                        <input type="checkbox" id="newViewerLinkAllowScores" checked /> Allow this viewer to see student scores
                     </label>
                     <button type="button" class="btn-password" style="margin-top:10px;width:auto;padding:6px 16px;" onclick="createViewerLink()">Create link</button>
                 </div>
@@ -917,10 +917,13 @@ const MCQ_MAX_WRONG = 5;
 /** 按官方转换表：FRQ Section II 卷面分达到该值即达标，与 MCQ 共同决定是否进入 5 分区间 */
 const frqMinForPass = { 'AP CSA': 36, 'AP CSP': 35 };
 
-/** 报考科目：当前学生实际有的科目（从 tests 里取）；无考试时用学生的 Subject 作为默认一门 */
+/** Enrolled subjects: from tests, or student.subjects from API, or default [current subject] */
 function getSubjectsInCurrentData() {
     var set = {};
     tests.forEach(function(t) { set[t.subject || 'AP CSA'] = true; });
+    if (Object.keys(set).length === 0 && students[currentStudentIndex] && students[currentStudentIndex].subjects && students[currentStudentIndex].subjects.length) {
+        return students[currentStudentIndex].subjects.slice();
+    }
     var list = Object.keys(set);
     if (list.length === 0) list = [getCurrentSubject()];
     return list;
@@ -961,7 +964,7 @@ function renderSubjectFilter() {
             el.style.display = 'flex';
             el.removeAttribute('data-single-subject');
             el.setAttribute('data-filter', 'all');
-            var pillsHtml = '<button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter(\'all\')">全部</button>';
+            var pillsHtml = '<button type="button" class="subject-pill active" data-value="all" onclick="setSubjectFilter(\'all\')">All</button>';
             subjects.forEach(function(s) {
                 pillsHtml += '<button type="button" class="subject-pill" data-value="' + s.replace(/"/g, '&quot;') + '" onclick="setSubjectFilter(\'' + s.replace(/'/g, "\\'") + '\')">' + s.replace(/</g, '&lt;') + '</button>';
             });
@@ -976,7 +979,7 @@ function renderSubjectFilter() {
         var currentFilter = (el && el.getAttribute('data-filter')) || 'all';
         if (!examSubjects.includes(currentFilter) && currentFilter !== 'all') currentFilter = 'all';
         el.setAttribute('data-filter', currentFilter);
-        var pillsHtml = '<button type="button" class="subject-pill' + (currentFilter === 'all' ? ' active' : '') + '" data-value="all" onclick="setSubjectFilter(\'all\')">全部</button>';
+        var pillsHtml = '<button type="button" class="subject-pill' + (currentFilter === 'all' ? ' active' : '') + '" data-value="all" onclick="setSubjectFilter(\'all\')">All</button>';
         examSubjects.forEach(function(s) {
             pillsHtml += '<button type="button" class="subject-pill' + (currentFilter === s ? ' active' : '') + '" data-value="' + s.replace(/"/g, '&quot;') + '" onclick="setSubjectFilter(\'' + s.replace(/'/g, "\\'") + '\')">' + s.replace(/</g, '&lt;') + '</button>';
         });
@@ -1097,7 +1100,8 @@ function switchStudent() {
 function openAddStudentModal() {
     document.getElementById('addStudentName').value = '';
     document.getElementById('addStudentGrade').value = '12';
-    document.getElementById('addStudentSubject').value = 'AP CSA';
+    document.getElementById('addStudentSubjectCSA').checked = true;
+    document.getElementById('addStudentSubjectCSP').checked = false;
     document.getElementById('addStudentError').textContent = '';
     document.getElementById('modalAddStudent').classList.remove('hidden');
 }
@@ -1111,14 +1115,20 @@ async function submitAddStudent() {
         return;
     }
     const grade = document.getElementById('addStudentGrade').value || '12';
-    const subject = document.getElementById('addStudentSubject').value || 'AP CSA';
-    const data = await api('POST', '/api/students', { name, grade, subject });
+    const subjects = [];
+    if (document.getElementById('addStudentSubjectCSA').checked) subjects.push('AP CSA');
+    if (document.getElementById('addStudentSubjectCSP').checked) subjects.push('AP CSP');
+    if (subjects.length === 0) {
+        document.getElementById('addStudentError').textContent = 'Select at least one subject';
+        return;
+    }
+    const data = await api('POST', '/api/students', { name, grade, subjects });
     if (data && data.error) {
         document.getElementById('addStudentError').textContent = data.error;
         return;
     }
     if (data) {
-        students.push({ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: data.tests || [] });
+        students.push({ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || subjects, tests: data.tests || [] });
         loadStudent(students.length - 1);
         renderStudentSelect();
         updateAll();
@@ -1204,7 +1214,7 @@ function renderTable() {
         t.bottomLine = getBottomLine(subj);
     });
 
-    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Subject</th><th>Score (/100)</th><th>AP Score</th><th>MCQ(错≤5)</th><th>FRQ(达标)</th><th></th></tr>';
+    thead.innerHTML = '<tr><th>#</th><th class="col-name">Test Name</th><th>Subject</th><th>Score (/100)</th><th>AP Score</th><th>MCQ (≤5 wrong)</th><th>FRQ (Pass)</th><th></th></tr>';
 
     var rowNum = 0;
     var rowsHTML = '';
@@ -1230,7 +1240,7 @@ function renderTable() {
         var frqStatusClass = frqBadge === '✓' ? ' mcq-frq-pass' : (frqBadge === '✗' ? ' mcq-frq-fail' : '');
         var mcqInput = editMode ? '<input type="number" min="0" step="0.1" value="' + mcqVal + '" placeholder="—" class="mcq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onMcqChange(this)" oninput="onMcqChange(this)" style="width:52px;">' : (mcqVal !== '' && mcqVal !== undefined ? mcqVal : '—');
         var frqInput = editMode ? '<input type="number" min="0" step="0.1" value="' + frqVal + '" placeholder="—" class="frq-input" data-index="' + i + '" data-test-id="' + testId + '" onchange="onFrqChange(this)" oninput="onFrqChange(this)" style="width:52px;">' : (frqVal !== '' && frqVal !== undefined ? frqVal : '—');
-        var nameCell = editMode ? '<input type="text" class="test-name-input" value="' + (t.name || '').replace(/"/g, '&quot;') + '" placeholder="考试名称" data-index="' + i + '" data-test-id="' + testId + '" onchange="onTestNameChange(this)" onblur="onTestNameChange(this)" style="width:100%;min-width:80px;padding:4px 6px;box-sizing:border-box;">' : '<span title="' + (t.name || '').replace(/"/g, '&quot;') + '">' + (t.name || '').replace(/</g, '&lt;') + '</span>';
+        var nameCell = editMode ? '<input type="text" class="test-name-input" value="' + (t.name || '').replace(/"/g, '&quot;') + '" placeholder="Test name" data-index="' + i + '" data-test-id="' + testId + '" onchange="onTestNameChange(this)" onblur="onTestNameChange(this)" style="width:100%;min-width:80px;padding:4px 6px;box-sizing:border-box;">' : '<span title="' + (t.name || '').replace(/"/g, '&quot;') + '">' + (t.name || '').replace(/</g, '&lt;') + '</span>';
         rowsHTML += '<tr><td class="td-num">' + rowNum + '</td><td class="td-name">' + nameCell + '</td><td class="td-subject">' + subj + '</td><td class="td-score"><input type="number" min="0" max="100" step="0.1" value="' + val + '" placeholder="--" class="' + scoreClass + '" data-index="' + i + '" data-test-id="' + testId + '" onchange="onScoreChange(this)" oninput="onScoreChange(this)" ' + scoreDisabled + '></td><td class="td-ap">' + apBadge + '</td><td class="td-mcq">' + mcqInput + ' <span class="mcq-frq-status' + mcqStatusClass + '">' + mcqBadge + '</span></td><td class="td-frq">' + frqInput + ' <span class="mcq-frq-status' + frqStatusClass + '">' + frqBadge + '</span></td><td class="td-action">' + (editMode ? '<button onclick="deleteTestByIndex(' + i + ')" title="Delete this test">&times;</button>' : '') + '</td></tr>';
     });
 
@@ -1242,8 +1252,8 @@ function renderTable() {
     var apBadgeSummary = apScore !== null ? '<span class="score-badge badge-' + apScore + '">' + apScore + '</span>' : '--';
     var mcqPassCount = visTests.filter(function(t) { var v = t.mcqWrong; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) <= MCQ_MAX_WRONG; }).length;
     var frqPassCount = visTests.filter(function(t) { var v = t.frqScore, s = t.subject || 'AP CSA'; var min = frqMinForPass[s] != null ? frqMinForPass[s] : 36; return v != null && v !== '' && !isNaN(Number(v)) && Number(v) >= min; }).length;
-    var mcqSummary = 'MCQ 达标: ' + mcqPassCount + '/' + visTests.length;
-    var frqSummary = 'FRQ 达标: ' + frqPassCount + '/' + visTests.length;
+    var mcqSummary = 'MCQ pass: ' + mcqPassCount + '/' + visTests.length;
+    var frqSummary = 'FRQ pass: ' + frqPassCount + '/' + visTests.length;
     rowsHTML += '<tr class="summary-row"><td></td><td style="text-align:left;padding-left:14px;">Average / Estimated</td><td></td><td>' + (avg !== null ? avg.toFixed(1) : '--') + '</td><td>' + apBadgeSummary + '</td><td colspan="2">' + mcqSummary + ' &nbsp; ' + frqSummary + '</td><td></td></tr>';
     tbody.innerHTML = rowsHTML;
 }
@@ -1280,7 +1290,7 @@ function onTestNameChange(input) {
     saveNameTimer = setTimeout(async () => {
         const s = students[currentStudentIndex];
         const res = await api('PUT', '/api/students/' + s.id + '/tests/' + testId, { name: tests[idx].name || 'Test' });
-        if (res && !res.error) showToast('已保存', 'success');
+        if (res && !res.error) showToast('Saved', 'success');
     }, 600);
 }
 function onScoreChange(input) {
@@ -1566,7 +1576,7 @@ async function submitAddTest() {
     const name = document.getElementById('addTestName').value.trim();
     document.getElementById('addTestError').textContent = '';
     if (!name) {
-        document.getElementById('addTestError').textContent = '请输入考试名称';
+        document.getElementById('addTestError').textContent = 'Please enter test name';
         return;
     }
     const s = students[currentStudentIndex];
@@ -1591,7 +1601,7 @@ async function submitAddTest() {
         });
         closeAddTestModal();
         updateAll();
-        showToast('已添加', 'success');
+        showToast('Added', 'success');
     }
 }
 function addTest() {
@@ -1809,7 +1819,7 @@ function initApp(user) {
 async function initTeacherView() {
     const data = await api('GET', '/api/students');
     if (!data || Array.isArray(data) === false) return;
-    students = data.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position })) }));
+    students = data.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
     if (students.length === 0) {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
@@ -1829,7 +1839,7 @@ async function initTeacherView() {
 async function initStudentView() {
     const data = await api('GET', '/api/me');
     if (!data || data.error) return;
-    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
     currentStudentIndex = 0;
     loadStudent(0);
     document.getElementById('sharedSubject').textContent = '(' + (data.subject || 'AP CSA') + ')';
@@ -1867,7 +1877,7 @@ async function initViewerLinkView(token) {
     }
     viewerLinkData = data;
     sharedMode = true;
-    students = data.students.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
+    students = data.students.map(s => ({ id: s.id, name: s.name, grade: s.grade, subject: s.subject, subjects: s.subjects || (s.subject ? [s.subject] : ['AP CSA']), tests: (s.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }));
     currentStudentIndex = 0;
     loadStudent(0);
     document.querySelector('.report-header .auth-bar').style.display = 'none';
@@ -1888,7 +1898,7 @@ async function initViewerLinkView(token) {
     var noScoreHint = document.getElementById('viewerNoScoreHint');
     if (noScoreHint) {
         noScoreHint.style.display = data.allowViewScores === false ? 'block' : 'none';
-        noScoreHint.textContent = '您无权限查看成绩，仅可查看学生与考试名称。';
+        noScoreHint.textContent = 'You do not have permission to view scores; only student and test names are visible.';
     }
     document.getElementById('sharedFooterToolbar').style.display = 'flex';
     renderStudentSelect();
@@ -1905,7 +1915,7 @@ async function initShareView(token) {
         return;
     }
     sharedMode = true;
-    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
+    students = [{ id: data.id, name: data.name, grade: data.grade, subject: data.subject, subjects: data.subjects || (data.subject ? [data.subject] : ['AP CSA']), tests: (data.tests || []).map(t => ({ id: t.id, name: t.name, subject: t.subject, score: t.score, bottomLine: t.bottomLine || 84, position: t.position, mcqWrong: t.mcqWrong, frqScore: t.frqScore })) }];
     currentStudentIndex = 0;
     loadStudent(0);
     document.querySelector('.report-header .auth-bar').style.display = 'none';
@@ -1938,8 +1948,8 @@ async function openAccountsModal() {
                 '<span style="color:#64748b;font-size:12px;">' + (u.displayName || '').replace(/</g, '&lt;') + '</span>' +
                 '<span style="font-size:12px;color:#94a3b8;">' + dateStr + '</span>' +
                 '<select id="approveSelect_' + u.id + '" style="padding:4px 8px;min-width:120px;">' + opts + '</select>' +
-                '<button type="button" class="btn-password" style="padding:4px 10px;font-size:12px;" onclick="approveRegistration(\'' + u.id + '\')">配置学生并通过</button>' +
-                '<button type="button" style="padding:4px 10px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer;" onclick="rejectRegistration(\'' + u.id + '\')">拒绝</button>' +
+                '<button type="button" class="btn-password" style="padding:4px 10px;font-size:12px;" onclick="approveRegistration(\'' + u.id + '\')">Approve & link student</button>' +
+                '<button type="button" style="padding:4px 10px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer;" onclick="rejectRegistration(\'' + u.id + '\')">Reject</button>' +
                 '</div>';
         }).join('');
     } else {
@@ -2004,7 +2014,7 @@ async function openViewerLinksModal() {
             const sn = (s.name || '').replace(/</g, '&lt;');
             return '<label style="display:block;padding:2px 0;"><input type="checkbox" class="viewer-link-edit-cb" data-link-id="' + v.id + '" data-student-id="' + s.id + '"' + checked + ' /> ' + sn + '</label>';
         }).join('');
-        const scoreLabel = allowScores ? '<span style="color:#16a34a;font-size:12px;">可查看成绩</span>' : '<span style="color:#94a3b8;font-size:12px;">不可查看成绩</span>';
+        const scoreLabel = allowScores ? '<span style="color:#16a34a;font-size:12px;">Can view scores</span>' : '<span style="color:#94a3b8;font-size:12px;">Cannot view scores</span>';
         return '<div class="viewer-link-item" data-link-id="' + v.id + '" style="margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;">' +
             '<div class="viewer-link-header">' +
             '<strong>' + safeName + '</strong> ' + scoreLabel + ' ' +
@@ -2014,7 +2024,7 @@ async function openViewerLinksModal() {
             '</div>' +
             '<div class="viewer-link-edit-box" id="editBox_' + v.id + '" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;">' +
             '<input type="text" id="editName_' + v.id + '" value="' + safeName + '" placeholder="Link name" style="width:100%;max-width:240px;padding:6px;margin-bottom:8px;box-sizing:border-box;" />' +
-            '<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="editAllowScores_' + v.id + '"' + (allowScores ? ' checked' : '') + ' /> 允许该老师查看成绩</label>' +
+            '<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="editAllowScores_' + v.id + '"' + (allowScores ? ' checked' : '') + ' /> Allow viewer to see scores</label>' +
             '<div style="font-size:12px;margin-bottom:4px;">Select students:</div>' +
             '<div style="max-height:140px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:6px;background:#fff;margin-bottom:8px;">' + editCheckboxes + '</div>' +
             '<button type="button" onclick="saveEditViewerLink(\'' + v.id + '\')" style="padding:4px 12px;margin-right:6px;">Save</button>' +

@@ -659,7 +659,7 @@ app.post('/api/students/:id/share/regenerate', requireAuth, requireTeacher, asyn
 
 app.get('/api/share/:token', async (req, res) => {
   const { rows } = await query(
-    `SELECT sl.token, s.id, s.name, s.grade, s.subject, sl.expires_at
+    `SELECT sl.token, s.id, s.name, s.grade, s.subject, s.subjects, sl.expires_at
      FROM share_links sl JOIN students s ON s.id = sl.student_id
      WHERE sl.token = $1`,
     [req.params.token]
@@ -675,6 +675,7 @@ app.get('/api/share/:token', async (req, res) => {
     name: r.name,
     grade: r.grade,
     subject: r.subject,
+    subjects: parseSubjects(r.subjects) || (r.subject ? [r.subject] : ['AP CSA']),
     tests: tests.rows.map(mapTestRow),
   });
 });
