@@ -41,13 +41,18 @@ export async function generateAnswer(question, chunks) {
 
   try {
     const parsed = JSON.parse(content);
-    if (!parsed.found) return { answer: NOT_FOUND_ANSWER, sources: [], found: false };
+    const hasAnswer = parsed.answer && parsed.answer.trim().length > 0;
+    const isFound = parsed.found !== false && hasAnswer;
     return {
-      answer: parsed.answer || NOT_FOUND_ANSWER,
+      answer: hasAnswer ? parsed.answer : NOT_FOUND_ANSWER,
       sources: Array.isArray(parsed.sources) ? parsed.sources : [],
-      found: Boolean(parsed.found)
+      found: isFound
     };
   } catch (_err) {
+    const fallback = content.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+    if (fallback.length > 20 && !fallback.toLowerCase().includes('could not find')) {
+      return { answer: fallback, sources: [], found: true };
+    }
     return { answer: NOT_FOUND_ANSWER, sources: [], found: false };
   }
 }

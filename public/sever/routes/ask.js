@@ -15,22 +15,30 @@ router.post('/', async (req, res) => {
     }
 
     const safety = safetyCheck(question);
-    const chunks = await retrieveChunks(question, 4);
+    const chunks = await retrieveChunks(question, 6);
+
+    console.log(`[ask] question="${question}" chunks_found=${chunks.length}`);
+    if (chunks.length > 0) {
+      console.log(`[ask] top chunk section="${chunks[0].metadata?.section}" text_preview="${chunks[0].text?.slice(0, 80)}..."`);
+    }
 
     if (!chunks.length) {
+      console.log('[ask] no chunks retrieved from ChromaDB');
       return res.json({ answer: NOT_FOUND_ANSWER, sources: [], found: false });
     }
 
     const aiResult = await generateAnswer(question, chunks);
+    console.log(`[ask] ai_result found=${aiResult.found}`);
 
     const sources = formatSourcesFromChunks(chunks);
     return res.json({
-      answer: aiResult.found ? aiResult.answer : NOT_FOUND_ANSWER,
+      answer: aiResult.answer,
       sources: aiResult.found ? sources : [],
       found: aiResult.found,
       safety: safety.suspicious ? { suspicious: true } : undefined
     });
   } catch (error) {
+    console.error('[ask] error:', error.message);
     return res.status(500).json({
       answer: NOT_FOUND_ANSWER,
       sources: [],
